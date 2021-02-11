@@ -32,8 +32,8 @@ jobs:
         - ${{ each artifact in parameters.Artifacts }}:
           - ${{ if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
             - pwsh: |
-                $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
-                                    -Xpath //ItemGroup/PackageReference/@Include).Node.Value
+                [xml]$pom = Get-Content ./common/smoke-tests/pom.xml
+                $deps = $pom.project.dependencies.GetEnumerator() | ForEach-Object { $_.artifactId }
                 if ($deps.Contains("${{ artifact.name }}")) {
                   Write-Host "Smoke tests will run for ${{ artifact.name }}"
                   Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
@@ -69,16 +69,41 @@ jobs:
 
 
     steps:
-      - task: Maven@3
-        displayName: Use the latest package version from the dev feed
-        inputs:
-          mavenPomFile: $(PomFile)
-          goals: 'versions:use-latest-versions'
-          options: '$(DefaultOptions) --no-transfer-progress -DskipTests "-Dincludes=com.azure:*"'
-          javaHomeOption: 'JDKVersion'
-          jdkVersionOption: $(JavaTestVersion)
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: false
+      - ${{ if eq(parameters.Daily, false) }}:
+        - ${{ each artifact in parameters.Artifacts }}:
+          - ${{ if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
+            - pwsh: |
+                [xml]$pom = Get-Content ./common/smoke-tests/pom.xml
+                $pom.project.dependencies.GetEnumerator() |
+                Where-Object { $_.artifactId -eq "${{ artifact }}" }
+                ForEach-Object {
+                  $_.version =
+                }
+                $pom.Save(./common/smoke-tests/pom.xml)
+              name: Set ${{ artifact.name }} version
+
+        - task: Maven@3
+          displayName: Use the latest GA/beta package versions
+          inputs:
+            mavenPomFile: $(PomFile)
+            goals: 'versions:use-latest-versions -Dmaven.version.rules="file:///${project.basedir}/exclude-daily-rules.xml"'
+            options: '$(DefaultOptions) --no-transfer-progress -DskipTests "-Dincludes=com.azure:*"'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: $(JavaTestVersion)
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+      - ${{ if eq(parameters.Daily, true) }}:
+        - task: Maven@3
+          displayName: Use the latest daily package versions
+          inputs:
+            mavenPomFile: $(PomFile)
+            goals: 'versions:use-latest-versions'
+            options: '$(DefaultOptions) --no-transfer-progress -DskipTests "-Dincludes=com.azure:*"'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: $(JavaTestVersion)
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+
 
       - task: UsePythonVersion@0
         displayName: 'Use Python 3.6'
