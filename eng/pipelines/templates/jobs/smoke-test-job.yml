@@ -75,7 +75,7 @@ jobs:
             - pwsh: |
                 [xml]$pom = Get-Content ./common/smoke-tests/pom.xml
                 $pom.project.dependencies.GetEnumerator() |
-                Where-Object { $_.artifactId -eq "${{ artifact }}" }
+                Where-Object { $_.artifactId -eq "${{ artifact.name }}" }
                 ForEach-Object {
                   $_.version =
                 }
