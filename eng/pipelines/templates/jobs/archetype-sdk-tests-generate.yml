@@ -25,16 +25,13 @@ jobs:
         - task: Powershell@2
           inputs:
             pwsh: true
-            targetType: inline
-            script: |
-              $VerbosePreference = 'Continue'
-              $filters = "${{ join('","', parameters.MatrixFilters) }}", "container=^$", "SupportedClouds=^$|${{ parameters.CloudConfig.Cloud }}"
-              eng/scripts/job-matrix/Create-JobMatrix.ps1 `
-                -ConfigPath ${{ config.Path }} `
-                -Selection ${{ config.Selection }} `
-                -DisplayNameFilter "$(displayNameFilter)" `
-                -Filters $filters `
-                -NonSparseParameters "${{ join('","', config.NonSparseParameters) }}"
+            filePath: eng/scripts/job-matrix/Create-JobMatrix.ps1
+            arguments: >
+              -ConfigPath ${{ config.Path }}
+              -Selection ${{ config.Selection }}
+              -DisplayNameFilter "$(displayNameFilter)"
+              -Filters "${{ join('","', parameters.MatrixFilters) }}","container=^$","SupportedClouds=^$|${{ parameters.CloudConfig.Cloud }}"
+              -NonSparseParameters "${{ join('","', config.NonSparseParameters) }}"
           displayName: Generate VM Job Matrix ${{ config.Name }}
           name: generate_vm_job_matrix_${{ config.Name }}
 
@@ -42,16 +39,13 @@ jobs:
         - task: Powershell@2
           inputs:
             pwsh: true
-            targetType: inline
-            script: |
-              $VerbosePreference = 'Continue'
-              $filters = "${{ join('","', parameters.MatrixFilters) }}", "container=*", "SupportedClouds=^$|${{ parameters.CloudConfig.Cloud }}"
-              eng/scripts/job-matrix/Create-JobMatrix.ps1 `
-                -ConfigPath ${{ config.Path }} `
-                -Selection ${{ config.Selection }} `
-                -DisplayNameFilter "$(displayNameFilter)" `
-                -Filters $filters `
-                -NonSparseParameters "${{ join('","', config.NonSparseParameters) }}"
+            filePath: eng/scripts/job-matrix/Create-JobMatrix.ps1
+            arguments: >
+              -ConfigPath ${{ config.Path }}
+              -Selection ${{ config.Selection }}
+              -DisplayNameFilter "$(displayNameFilter)"
+              -Filters "${{ join('","', parameters.MatrixFilters) }}", "container=.*", "SupportedClouds=^$|${{ parameters.CloudConfig.Cloud }}"
+              -NonSparseParameters "${{ join('","', config.NonSparseParameters) }}"
           displayName: Generate Container Job Matrix
           name: generate_container_job_matrix_${{ config.Name }}
 
