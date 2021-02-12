@@ -69,16 +69,30 @@ jobs:
 
     steps:
       - ${{ if eq(parameters.Daily, false) }}:
+        - download: current
+          artifact: ${{ parameters.ArtifactName }}
+          timeoutInMinutes: 5
+
         - ${{ each artifact in parameters.Artifacts }}:
           - ${{ if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
             - pwsh: |
-                [xml]$pom = Get-Content ./common/smoke-tests/pom.xml
-                $pom.project.dependencies.GetEnumerator() |
+                $artifactsPath = Join-Path "$(Pipeline.Workspace)" "${{ parameters.ArtifactName }}" "${{ artifact.groupId }}"
+
+                if (!(Test-Path $packagePath)) {
+                  throw "Expected $packagePath to exist"
+                }
+
+                $pkg = Get-ChildItem "$artifactsPath/${{ parameters.artifact.name }}/*.pom" | Select-Object -First 1
+                [xml]$packagePom = Get-Content $pkg
+                $releaseVersion = $packagePom.project.version
+
+                [xml]$smokeTestPom = Get-Content ./common/smoke-tests/pom.xml
+                $smokeTestPom.project.dependencies.GetEnumerator() |
                 Where-Object { $_.artifactId -eq "${{ artifact.name }}" }
                 ForEach-Object {
-                  $_.version = ${{ parameters.artifact.version }}
+                  $_.version = $releaseVersion
                 }
-                $pom.Save(./common/smoke-tests/pom.xml)
+                $smokeTestPom.Save(./common/smoke-tests/pom.xml)
               name: Set_${{ artifact.safeName }}_version
 
         - task: Maven@3
