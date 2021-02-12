@@ -290,14 +290,10 @@ stages:
                           CloseAfterOpenForTesting: '${{ parameters.TestPipeline }}'
 
   - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: SmokeTest_Release_Packages
-      displayName: Smoke Test Release Packages
-      jobs:
-        - template: /eng/pipelines/templates/jobs/smoke-tests.yml
-          parameters:
-            Daily: false
-            Artifacts: ${{ parameters.Artifacts }}
-            ArtifactName: ${{ parameters.ArtifactName }}
+    - template: /eng/pipelines/templates/jobs/smoke-tests.yml
+      parameters:
+        Artifacts: ${{ parameters.Artifacts }}
+        ArtifactName: ${{ parameters.ArtifactName }}
 
   - ${{if ne(parameters.EnableIntegrationStage, false)}}:
     - stage: Integration
