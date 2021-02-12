@@ -76,7 +76,7 @@ jobs:
                 $pom.project.dependencies.GetEnumerator() |
                 Where-Object { $_.artifactId -eq "${{ artifact.name }}" }
                 ForEach-Object {
-                  $_.version =
+                  $_.version = ${{ parameters.artifact.version }}
                 }
                 $pom.Save(./common/smoke-tests/pom.xml)
               name: Set_${{ artifact.safeName }}_version
