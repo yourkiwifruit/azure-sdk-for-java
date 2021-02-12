@@ -19,8 +19,6 @@ parameters:
     type: string
     default: ""
 
-
-
 jobs:
   - ${{ if eq(parameters.Daily, false) }}:
     - job: smoke_test_eligibility
@@ -81,7 +79,7 @@ jobs:
                   $_.version =
                 }
                 $pom.Save(./common/smoke-tests/pom.xml)
-              name: Set ${{ artifact.name }} version
+              name: Set_${{ artifact.safeName }}_version
 
         - task: Maven@3
           displayName: Use the latest GA/beta package versions

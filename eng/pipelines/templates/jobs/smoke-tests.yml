@@ -12,6 +12,8 @@ stages:
     jobs:
       - template: ./smoke-test-job.yml
         parameters:
+          Artifacts: ${{ parameters.Artifacts }}
+          ArtifactName: ${{ parameters.ArtifactName }}
           Daily: false
           TestTask:
             task: Maven@3
