@@ -75,25 +75,14 @@ jobs:
 
         - ${{ each artifact in parameters.Artifacts }}:
           - ${{ if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
-            - pwsh: |
-                $artifactsPath = Join-Path "$(Pipeline.Workspace)" "${{ parameters.ArtifactName }}" "${{ artifact.groupId }}"
-
-                if (!(Test-Path $packagePath)) {
-                  throw "Expected $packagePath to exist"
-                }
-
-                $pkg = Get-ChildItem "$artifactsPath/${{ parameters.artifact.name }}/*.pom" | Select-Object -First 1
-                [xml]$packagePom = Get-Content $pkg
-                $releaseVersion = $packagePom.project.version
-
-                [xml]$smokeTestPom = Get-Content ./common/smoke-tests/pom.xml
-                $smokeTestPom.project.dependencies.GetEnumerator() |
-                Where-Object { $_.artifactId -eq "${{ artifact.name }}" }
-                ForEach-Object {
-                  $_.version = $releaseVersion
-                }
-                $smokeTestPom.Save(./common/smoke-tests/pom.xml)
-              name: Set_${{ artifact.safeName }}_version
+            - task: Powershell@2
+              inputs:
+                pwsh: true
+                filePath: eng/pipelines/scripts/update-smoke-test-release-version.ps1
+                arguments: >
+                  -ArtifactsPath "$(Pipeline.Workspace)" "${{ parameters.ArtifactName }}" "${{ artifact.groupId }}"
+                  -ArtifactName "${{ artifact.name }}"
+                displayName: Set ${{ artifact.name }} version in smoke test pom.xml
 
         - task: Maven@3
           displayName: Use the latest GA/beta package versions
