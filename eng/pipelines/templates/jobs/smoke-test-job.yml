@@ -32,6 +32,7 @@ jobs:
         - ${{ each artifact in parameters.Artifacts }}:
           - ${{ if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
             - pwsh: |
+                Set-PSDebug -Trace 2
                 [xml]$pom = Get-Content ./common/smoke-tests/pom.xml
                 $deps = $pom.project.dependencies.GetEnumerator() | ForEach-Object { $_.artifactId }
                 if ($deps.Contains("${{ artifact.name }}")) {
