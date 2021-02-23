@@ -5,6 +5,8 @@ stages:
     parameters:
       ServiceDirectory: formrecognizer
       timeoutInMinutes: 120 # how long to run the job before automatically cancelling
+      SupportedClouds: 'UsGov'
+      Clouds: 'UsGov'
       Artifacts:
         - name: azure-ai-formrecognizer
           groupId: com.azure
