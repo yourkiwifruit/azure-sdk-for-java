@@ -262,9 +262,15 @@ try {
             @{}
         }
 
+
+        Write-Host "Setting env $Environment"
+        Set-AzEnvironment -Name $Environment
+
         $provisionerAccount = Retry {
             Connect-AzAccount -Force:$Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment @subscriptionArgs
         }
+
+        Get-AzContext
 
         $exitActions += {
             Write-Verbose "Logging out of service principal '$($provisionerAccount.Context.Account)'"
