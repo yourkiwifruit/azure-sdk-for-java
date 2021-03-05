@@ -47,7 +47,6 @@ stages:
           reportDirectory: sdk/communication/target/site/jacoco-aggregate/
           failIfCoverageEmpty: false
     EnvVars:
-      AZURE_SUBSCRIPTION_ID: $(COMMUNICATION_SUBSCRIPTION_ID)
       AZURE_TENANT_ID: $(COMMUNICATION_TENANT_ID)
       AZURE_CLIENT_ID: $(COMMUNICATION_CLIENT_ID)
       AZURE_CLIENT_SECRET: $(COMMUNICATION_CLIENT_SECRET)
