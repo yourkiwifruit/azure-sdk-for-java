@@ -51,8 +51,6 @@ jobs:
         - task: Powershell@2
           inputs:
             pwsh: true
-            ${{ if parameters.SparseCheckout }}:
-              workingDirectory: $(Build.Repository.LocalPath)
             filePath: eng/common/scripts/job-matrix/Create-JobMatrix.ps1
             arguments: >
               -ConfigPath ${{ config.Path }}
@@ -67,8 +65,6 @@ jobs:
         - task: Powershell@2
           inputs:
             pwsh: true
-            ${{ if parameters.SparseCheckout }}:
-              workingDirectory: $(Build.Repository.LocalPath)
             filePath: eng/common/scripts/job-matrix/Create-JobMatrix.ps1
             arguments: >
               -ConfigPath ${{ config.Path }}

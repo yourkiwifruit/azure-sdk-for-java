@@ -4,11 +4,11 @@ stages:
 - template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
   parameters:
     CloudConfig:
-      Public:
-        SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
-      Int:
+      ACS_Public:
+        SubscriptionConfiguration: $(sub-config-communication-services-cloud-test-resources)
+      ACS_Int:
         SubscriptionConfiguration: $(sub-config-communication-int-test-resources)
-    Clouds: Int
+    Clouds: ACS_Int
     Artifacts:
       - name: azure-communication-chat
         groupId: com.azure
@@ -49,14 +49,14 @@ stages:
           reportDirectory: sdk/communication/target/site/jacoco-aggregate/
           failIfCoverageEmpty: false
     EnvVars:
+      AZURE_SUBSCRIPTION_ID: $(COMMUNICATION_SUBSCRIPTION_ID)
+      AZURE_TENANT_ID: $(COMMUNICATION_TENANT_ID)
+      AZURE_CLIENT_ID: $(COMMUNICATION_CLIENT_ID)
+      AZURE_CLIENT_SECRET: $(COMMUNICATION_CLIENT_SECRET)
       AZURE_TEST_MODE: LIVE
       SKIP_PHONENUMBER_INTEGRATION_TESTS: TRUE
       SKIP_LIVE_TEST: TRUE
-      AZURE_SUBSCRIPTION_ID: $(acs-subscription-id)
       COMMUNICATION_LIVETEST_CONNECTION_STRING: $(communication-livetest-connection-string)
       SMS_SERVICE_PHONE_NUMBER: $(communication-livetest-phone-number)
-      AZURE_TENANT_ID: $(aad-azure-sdk-test-tenant-id)
-      AZURE_CLIENT_SECRET: $(aad-azure-sdk-test-client-secret)
-      AZURE_CLIENT_ID: $(aad-azure-sdk-test-client-id)
       COMMUNICATION_PHONE_NUMBER: $(communication-livetest-phone-number-for-config)
 
