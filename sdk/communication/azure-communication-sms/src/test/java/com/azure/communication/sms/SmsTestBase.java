@@ -41,7 +41,7 @@ public class SmsTestBase extends TestBase {
         .get("COMMUNICATION_SERVICE_ACCESS_KEY", ACCESSKEYENCODED);
 
     protected static final String CONNECTION_STRING = Configuration.getGlobalConfiguration()
-        .get("COMMUNICATION_CONNECTION_STRING", "endpoint=https://REDACTED.communication.azure.com/;accesskey=" + ACCESSKEYENCODED);
+        .get("COMMUNICATION_LIVETEST_CONNECTION_STRING", "endpoint=https://REDACTED.communication.azure.com/;accesskey=" + ACCESSKEYENCODED);
 
     protected static final String SMS_SERVICE_PHONE_NUMBER = Configuration.getGlobalConfiguration()
         .get("SMS_SERVICE_PHONE_NUMBER", "+15551234567");
