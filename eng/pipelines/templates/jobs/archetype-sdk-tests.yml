@@ -112,6 +112,10 @@ jobs:
           Write-Host ($env:AZURE_CLIENT_ID -split '')
           Write-Host "s"
           Write-Host ($env:AZURE_SUBSCRIPTION_ID -split '')
+          Write-Host "p"
+          Write-Host ($env:COMMUNICATION_PHONE_NUMBER -split '')
+          Write-Host "pc"
+          Write-Host ($env:SMS_SERVICE_PHONE_NUMBER -split '')
         env:
           ${{ each var in parameters.EnvVars }}:
             ${{ var.key }}: ${{ var.value }}
