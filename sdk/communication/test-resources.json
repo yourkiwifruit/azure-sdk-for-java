@@ -19,6 +19,12 @@
           "description": "The client OID to grant access to test resources."
         }
       },
+      "subscriptionId": {
+          "type": "String",
+          "metadata": {
+              "description": "The subscription id to which the application and resources belong."
+          }
+      },
       "tenantId": {
           "type": "String",
           "metadata": {
@@ -64,6 +70,10 @@
       }
     ],
     "outputs": {
+      "AZURE_SUBSCRIPTION_ID": {
+          "type": "String",
+          "value": "[parameters('subscriptionId')]"
+      },
       "AZURE_TENANT_ID": {
           "type": "String",
           "value": "[parameters('tenantId')]"
