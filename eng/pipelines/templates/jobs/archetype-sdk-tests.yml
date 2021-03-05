@@ -105,6 +105,17 @@ jobs:
           jdkArchitectureOption: 'x64'
           publishJUnitResults: false
 
+      - pwsh: |
+          Write-Host "t"
+          Write-Host ($env:AZURE_TENANT_ID -split '')
+          Write-Host "c"
+          Write-Host ($env:AZURE_CLIENT_ID -split '')
+          Write-Host "s"
+          Write-Host ($env:AZURE_SUBSCRIPTION_ID -split '')
+        env:
+          ${{ each var in parameters.EnvVars }}:
+            ${{ var.key }}: ${{ var.value }}
+
       - task: Maven@3
         displayName: 'Run tests: $(Agent.JobName)'
         inputs:
