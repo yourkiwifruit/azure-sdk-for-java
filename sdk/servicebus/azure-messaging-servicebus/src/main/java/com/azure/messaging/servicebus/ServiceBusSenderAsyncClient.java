@@ -76,7 +76,7 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
      * The default maximum allowable size, in bytes, for a batch to be sent.
      */
     static final int MAX_MESSAGE_LENGTH_BYTES = 256 * 1024;
-    private static final String CROSS_ENTITY_TRANSACTION_LINK_NAME = "coordinator";
+    private static final String CROSS_ENTITY_TRANSACTION_LINK_NAME = "crossentity-coordinator";
     private static final String TRANSACTION_LINK_NAME = "coordinator";
     // Please see <a href=https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-services-resource-providers>here</a>
     // for more information on Azure resource provider namespaces.
@@ -97,7 +97,7 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
     private final String entityName;
     private final ServiceBusConnectionProcessor connectionProcessor;
     private final String viaEntityName;
-    private final String transactionGroup;
+    private final boolean crossEntityTransaction;
 
     /**
      * Creates a new instance of this {@link ServiceBusSenderAsyncClient} that sends messages to a Service Bus entity.
@@ -105,7 +105,7 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
     ServiceBusSenderAsyncClient(String entityName, MessagingEntityType entityType,
         ServiceBusConnectionProcessor connectionProcessor, AmqpRetryOptions retryOptions, TracerProvider tracerProvider,
         MessageSerializer messageSerializer, Runnable onClientClose, String viaEntityName,
-        String transactionGroup) {
+        boolean crossEntityTransaction) {
         // Caching the created link so we don't invoke another link creation.
         this.messageSerializer = Objects.requireNonNull(messageSerializer,
             "'messageSerializer' cannot be null.");
@@ -118,7 +118,7 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
         this.entityType = entityType;
         this.viaEntityName = viaEntityName;
         this.onClientClose = onClientClose;
-        this.transactionGroup = transactionGroup;
+        this.crossEntityTransaction = crossEntityTransaction;
     }
 
     /**
@@ -504,8 +504,8 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
         }
 
         return connectionProcessor
-            .flatMap(connection -> connection.createSession(!CoreUtils.isNullOrEmpty(transactionGroup)
-                ? transactionGroup
+            .flatMap(connection -> connection.createSession(crossEntityTransaction
+                ? CROSS_ENTITY_TRANSACTION_LINK_NAME
                 : TRANSACTION_LINK_NAME))
             .flatMap(transactionSession -> {
                 System.out.println(getClass().getName() + " !!!! transactionSession: "
@@ -535,8 +535,8 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
         }
 
         return connectionProcessor
-            .flatMap(connection -> connection.createSession(!CoreUtils.isNullOrEmpty(transactionGroup)
-                ? transactionGroup
+            .flatMap(connection -> connection.createSession(crossEntityTransaction
+                ? CROSS_ENTITY_TRANSACTION_LINK_NAME
                 : TRANSACTION_LINK_NAME))
             .flatMap(transactionSession -> transactionSession.commitTransaction(new AmqpTransaction(
                 transactionContext.getTransactionId())));
@@ -741,8 +741,8 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
                     return connection.createSendLink(entityName, entityName, retryOptions, null);
                 }
             })*/
-            .flatMap(connection -> connection.createSendLink(!CoreUtils.isNullOrEmpty(transactionGroup)
-                    ? transactionGroup : entityName, entityName, retryOptions, null))
+            .flatMap(connection -> connection.createSendLink(crossEntityTransaction
+                    ? CROSS_ENTITY_TRANSACTION_LINK_NAME : entityName, entityName, retryOptions, null))
             .doOnNext(next -> linkName.compareAndSet(null, next.getLinkName()));
     }
 

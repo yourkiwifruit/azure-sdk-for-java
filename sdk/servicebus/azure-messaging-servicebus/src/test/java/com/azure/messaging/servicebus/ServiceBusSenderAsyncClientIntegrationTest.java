@@ -3,7 +3,6 @@
 
 package com.azure.messaging.servicebus;
 
-import com.azure.core.amqp.implementation.ConnectionOptions;
 import com.azure.core.util.logging.ClientLogger;
 import com.azure.messaging.servicebus.implementation.MessagingEntityType;
 import com.azure.messaging.servicebus.models.CompleteOptions;
@@ -530,25 +529,25 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
 
         final ServiceBusSenderAsyncClient destination1_Sender = builder
             .sender()
-            .transactionGroup(transactionGroup)
+            .enableCrossEntityTransactions()
             .queueName(queue1)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination2_Sender = builder
             .sender()
-            .transactionGroup(transactionGroup)
+            .enableCrossEntityTransactions()
             .queueName(queue2)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination3_Sender = builder
             .sender()
-            .transactionGroup(transactionGroup)
+            .enableCrossEntityTransactions()
             .queueName(queue3)
             .buildAsyncClient();
 
         final ServiceBusReceiverAsyncClient destination1_receiver = builder
             .receiver()
-            .transactionGroup(transactionGroup)
+            .enableCrossEntityTransactions()
             .queueName(queue1)
             .disableAutoComplete()
             .buildAsyncClient();
@@ -565,13 +564,13 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
             return destination1_receiver.complete(message, new CompleteOptions().setTransactionContext(transactionId))
                 .thenReturn(message);
         }).subscribe(message -> {
-            System.out.println("!!!! Test Receiver completed message queue1, SQ " + message.getSequenceNumber());
+            System.out.println("!!!! Test Receiver completed message queue1, SQ " + message.getSequenceNumber() + "  :" + message.getBody().toString());
         });
 
         TimeUnit.SECONDS.sleep(8);
 
         destination3_Sender.sendMessages(messages3, transactionId)
-            .then(destination3_Sender.rollbackTransaction(transactionId)
+            .then(destination3_Sender.commitTransaction(transactionId)
                 .doOnSuccess(a -> {
                     System.out.println("!!!! rollbackTransaction     complete " + a);
                 }))

@@ -164,7 +164,7 @@ class ServiceBusSenderAsyncClientTest {
                 connectionOptions.getRetry()));
 
         sender = new ServiceBusSenderAsyncClient(ENTITY_NAME, MessagingEntityType.QUEUE, connectionProcessor,
-            retryOptions, tracerProvider, serializer, onClientClose, null, null);
+            retryOptions, tracerProvider, serializer, onClientClose, null, false);
 
         when(connection.getManagementNode(anyString(), any(MessagingEntityType.class)))
             .thenReturn(just(managementNode));
@@ -396,7 +396,7 @@ class ServiceBusSenderAsyncClientTest {
         final ServiceBusMessageBatch batch = new ServiceBusMessageBatch(256 * 1024,
             errorContextProvider, tracerProvider1, serializer, null, null);
         sender = new ServiceBusSenderAsyncClient(ENTITY_NAME, MessagingEntityType.QUEUE, connectionProcessor,
-            retryOptions, tracerProvider1, serializer, onClientClose, null, null);
+            retryOptions, tracerProvider1, serializer, onClientClose, null, false);
 
         when(connection.createSendLink(eq(ENTITY_NAME), eq(ENTITY_NAME), eq(retryOptions), isNull()))
             .thenReturn(Mono.just(sendLink));

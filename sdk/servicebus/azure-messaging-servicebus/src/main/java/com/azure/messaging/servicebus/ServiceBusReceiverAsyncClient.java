@@ -90,6 +90,7 @@ import static com.azure.messaging.servicebus.implementation.Messages.INVALID_OPE
 public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
     private static final DeadLetterOptions DEFAULT_DEAD_LETTER_OPTIONS = new DeadLetterOptions();
     private static final String TRANSACTION_LINK_NAME = "coordinator";
+    private static final String CROSS_ENTITY_TRANSACTION_LINK_NAME = "crossentity-coordinator";
 
     private final LockContainer<LockRenewalOperation> renewalContainer;
     private final AtomicBoolean isDisposed = new AtomicBoolean();
@@ -105,7 +106,7 @@ public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
     private final Runnable onClientClose;
     private final ServiceBusSessionManager sessionManager;
     private final Semaphore completionLock = new Semaphore(1);
-    private final String transactionGroup;
+    private final boolean crossEntityTransaction;
 
     // Starting at -1 because that is before the beginning of the stream.
     private final AtomicLong lastPeekedSequenceNumber = new AtomicLong(-1);
@@ -122,12 +123,12 @@ public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
      * @param tracerProvider Tracer for telemetry.
      * @param messageSerializer Serializes and deserializes Service Bus messages.
      * @param onClientClose Operation to run when the client completes.
-     * @param transactionGroup to be set for creating transactional client.
+     * @param crossEntityTransaction to be set for creating transactional client.
      */
     ServiceBusReceiverAsyncClient(String fullyQualifiedNamespace, String entityPath, MessagingEntityType entityType,
         ReceiverOptions receiverOptions, ServiceBusConnectionProcessor connectionProcessor, Duration cleanupInterval,
         TracerProvider tracerProvider, MessageSerializer messageSerializer, Runnable onClientClose,
-        String transactionGroup) {
+        boolean crossEntityTransaction) {
         this.fullyQualifiedNamespace = Objects.requireNonNull(fullyQualifiedNamespace,
             "'fullyQualifiedNamespace' cannot be null.");
         this.entityPath = Objects.requireNonNull(entityPath, "'entityPath' cannot be null.");
@@ -146,13 +147,13 @@ public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
         });
 
         this.sessionManager = null;
-        this.transactionGroup = transactionGroup;
+        this.crossEntityTransaction = crossEntityTransaction;
     }
 
     ServiceBusReceiverAsyncClient(String fullyQualifiedNamespace, String entityPath, MessagingEntityType entityType,
         ReceiverOptions receiverOptions, ServiceBusConnectionProcessor connectionProcessor, Duration cleanupInterval,
         TracerProvider tracerProvider, MessageSerializer messageSerializer, Runnable onClientClose,
-        ServiceBusSessionManager sessionManager, String transactionGroup) {
+        ServiceBusSessionManager sessionManager, boolean crossEntityTransaction) {
         this.fullyQualifiedNamespace = Objects.requireNonNull(fullyQualifiedNamespace,
             "'fullyQualifiedNamespace' cannot be null.");
         this.entityPath = Objects.requireNonNull(entityPath, "'entityPath' cannot be null.");
@@ -170,7 +171,7 @@ public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
                 renewal.getSessionId(), renewal.getStatus(), renewal.getThrowable());
             renewal.close();
         });
-        this.transactionGroup = transactionGroup;
+        this.crossEntityTransaction = crossEntityTransaction;
     }
 
     /**
@@ -1180,8 +1181,8 @@ public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
                 return connection.createReceiveLink(linkName, entityPath, receiverOptions.getReceiveMode(),
                     null, entityType, receiverOptions.getSessionId());
             } else {
-                return connection.createReceiveLink(transactionGroup!= null? transactionGroup : linkName, entityPath,
-                    receiverOptions.getReceiveMode(), null, entityType);
+                return connection.createReceiveLink(crossEntityTransaction ? CROSS_ENTITY_TRANSACTION_LINK_NAME
+                    : linkName, entityPath, receiverOptions.getReceiveMode(), null, entityType);
             }
         })
             .doOnNext(next -> {
