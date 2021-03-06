@@ -174,7 +174,7 @@ class ServiceBusSessionReceiverAsyncClientTest {
             NAMESPACE, ENTITY_PATH,
             MessagingEntityType.QUEUE, receiverOptions,
             connectionProcessor, tracerProvider,
-            messageSerializer, () -> { }
+            messageSerializer, () -> { }, null
         );
 
         // Act & Assert
@@ -264,7 +264,7 @@ class ServiceBusSessionReceiverAsyncClientTest {
             NAMESPACE, ENTITY_PATH,
             MessagingEntityType.QUEUE, receiverOptions,
             connectionProcessor, tracerProvider,
-            messageSerializer, () -> { }
+            messageSerializer, () -> { }, null
         );
 
         // Act & Assert

@@ -7,15 +7,22 @@ import com.azure.core.util.CoreUtils;
 import com.azure.core.util.logging.ClientLogger;
 import com.azure.messaging.servicebus.ServiceBusClientBuilder.ServiceBusSessionReceiverClientBuilder;
 import com.azure.messaging.servicebus.implementation.MessagingEntityType;
+import com.azure.messaging.servicebus.models.CompleteOptions;
+import com.nimbusds.jose.util.StandardCharset;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -95,6 +102,77 @@ class ServiceBusSessionManagerIntegrationTest extends IntegrationTestBase {
                 assertMessageEquals(sessionId, messageId, contents, serviceBusReceivedMessage))
             .thenCancel()
             .verify(Duration.ofMinutes(2));
+    }
+
+    @Test
+    void transactionQueueMessageSendTest() throws InterruptedException {
+        // Arrange
+        final boolean useCredentials = false;
+        String queue1 = "session-queue-1";
+        String queue2 = "session-queue-2";
+
+        final String messageId = UUID.randomUUID().toString();
+        final String session1 = "1";
+        final String transactionGroup = "coordinator1";
+
+        final byte[] CONTENTS_BYTES1 = "Some-contents 1".getBytes(StandardCharsets.UTF_8);
+        final byte[] CONTENTS_BYTES2 = "Some-contents 2".getBytes(StandardCharsets.UTF_8);
+        final ServiceBusMessage message1 = getServiceBusMessage(CONTENTS_BYTES1, messageId).setSessionId(session1);
+        final ServiceBusMessage message2 = getServiceBusMessage(CONTENTS_BYTES2, messageId).setSessionId(session1);
+
+        final List<ServiceBusMessage> messages1 = Collections.singletonList(message1);
+        final List<ServiceBusMessage> messages2 = Collections.singletonList(message2);
+
+        ServiceBusClientBuilder builder = getBuilder(useCredentials);
+
+        final ServiceBusSenderAsyncClient destination1_Sender = builder
+            .sender()
+            .transactionGroup(transactionGroup)
+            .queueName(queue1)
+            .buildAsyncClient();
+
+        final ServiceBusSenderAsyncClient destination2_Sender = builder
+            .sender()
+            .transactionGroup(transactionGroup)
+            .queueName(queue2)
+            .buildAsyncClient();
+
+        final ServiceBusReceiverAsyncClient destination1_receiver = builder
+            .sessionReceiver()
+            .transactionGroup(transactionGroup)
+            .queueName(queue1)
+            .disableAutoComplete()
+            .buildAsyncClient()
+            .acceptSession(session1).block();
+
+        System.out.println("!!!! Got receiver and one session locked for " + session1);
+
+        ServiceBusTransactionContext transactionId = destination1_Sender.createTransaction().block();
+
+        StepVerifier.create(destination1_Sender.sendMessages(messages1, transactionId)).verifyComplete();
+
+        destination2_Sender
+            .sendMessages(messages2, transactionId)
+            .block();
+
+        destination1_receiver.receiveMessages().take(1).flatMap(message-> {
+            System.out.println("!!!! Received completed message queue1, SQ " + message.getSequenceNumber());
+            return destination1_receiver.complete(message, new CompleteOptions().setTransactionContext(transactionId))
+                .thenReturn(message);
+        }).subscribe(message -> {
+            System.out.println("!!!! Test Receiver completed message queue1, SQ " + message.getSequenceNumber());
+        });
+
+        TimeUnit.SECONDS.sleep(4);
+
+        destination1_Sender.sendMessages(messages1, transactionId)
+            .then(destination1_Sender.commitTransaction(transactionId)
+                .doOnSuccess(a -> {
+                    System.out.println("!!!! Transaction complete " + a);
+                }))
+            .subscribe();
+
+        TimeUnit.SECONDS.sleep(16);
     }
 
     /**

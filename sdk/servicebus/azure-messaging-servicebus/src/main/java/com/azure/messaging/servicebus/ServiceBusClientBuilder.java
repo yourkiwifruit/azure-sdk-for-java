@@ -557,6 +557,7 @@ public final class ServiceBusClientBuilder {
     public final class ServiceBusSenderClientBuilder {
         private String queueName;
         private String topicName;
+        private String transactionGroup;
 
         private ServiceBusSenderClientBuilder() {
         }
@@ -582,6 +583,18 @@ public final class ServiceBusClientBuilder {
          */
         public ServiceBusSenderClientBuilder topicName(String topicName) {
             this.topicName = topicName;
+            return this;
+        }
+
+        /**
+         * Sets the transactionGroup to use
+         *
+         * @param transactionGroup The transactionGroup to use.
+         *
+         * @return The updated {@link ServiceBusSenderClientBuilder} object.
+         */
+        public ServiceBusSenderClientBuilder transactionGroup(String transactionGroup) {
+            this.transactionGroup = transactionGroup;
             return this;
         }
 
@@ -618,7 +631,8 @@ public final class ServiceBusClientBuilder {
             }
 
             return new ServiceBusSenderAsyncClient(entityName, entityType, connectionProcessor, retryOptions,
-                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, null);
+                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, null,
+                transactionGroup);
         }
 
         /**
@@ -755,6 +769,18 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
+         * Sets the transactionGroup to use
+         *
+         * @param transactionGroup The transactionGroup to use.
+         *
+         * @return The updated {@link ServiceBusSessionProcessorClientBuilder} object.
+         */
+        public ServiceBusSessionProcessorClientBuilder transactionGroup(String transactionGroup) {
+            sessionReceiverClientBuilder.transactionGroup(transactionGroup);
+            return this;
+        }
+
+        /**
          * The message processing callback for the processor that will be executed when a message is received.
          * @param processMessage The message processing consumer that will be executed when a message is received.
          *
@@ -848,6 +874,7 @@ public final class ServiceBusClientBuilder {
         private String subscriptionName;
         private String topicName;
         private Duration maxAutoLockRenewDuration = MAX_LOCK_RENEW_DEFAULT_DURATION;
+        private String transactionGroup;
 
         private ServiceBusSessionReceiverClientBuilder() {
         }
@@ -972,6 +999,18 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
+         * Sets the transactionGroup to use
+         *
+         * @param transactionGroup The transactionGroup to use.
+         *
+         * @return The updated {@link ServiceBusSessionReceiverClientBuilder} object.
+         */
+        public ServiceBusSessionReceiverClientBuilder transactionGroup(String transactionGroup) {
+            this.transactionGroup = transactionGroup;
+            return this;
+        }
+
+        /**
          * Creates an <b>asynchronous</b>, <b>session-aware</b> Service Bus receiver responsible for reading {@link
          * ServiceBusMessage messages} from a specific queue or subscription.
          *
@@ -1009,7 +1048,7 @@ public final class ServiceBusClientBuilder {
 
             return new ServiceBusReceiverAsyncClient(connectionProcessor.getFullyQualifiedNamespace(), entityPath,
                 entityType, receiverOptions, connectionProcessor, ServiceBusConstants.OPERATION_TIMEOUT,
-                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, sessionManager);
+                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, sessionManager, transactionGroup);
         }
 
         /**
@@ -1073,7 +1112,7 @@ public final class ServiceBusClientBuilder {
 
             return new ServiceBusSessionReceiverAsyncClient(connectionProcessor.getFullyQualifiedNamespace(),
                 entityPath, entityType, receiverOptions, connectionProcessor, tracerProvider, messageSerializer,
-                ServiceBusClientBuilder.this::onClientClose);
+                ServiceBusClientBuilder.this::onClientClose, transactionGroup);
         }
     }
 
@@ -1259,6 +1298,7 @@ public final class ServiceBusClientBuilder {
         private String subscriptionName;
         private String topicName;
         private Duration maxAutoLockRenewDuration = MAX_LOCK_RENEW_DEFAULT_DURATION;
+        private String transactionGroup;
 
         private ServiceBusReceiverClientBuilder() {
         }
@@ -1378,6 +1418,18 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
+         * Sets the transactionGroup to use
+         *
+         * @param transactionGroup The transactionGroup to use.
+         *
+         * @return The updated {@link ServiceBusReceiverClientBuilder} object.
+         */
+        public ServiceBusReceiverClientBuilder transactionGroup(String transactionGroup) {
+            this.transactionGroup = transactionGroup;
+            return this;
+        }
+
+        /**
          * Creates an <b>asynchronous</b> Service Bus receiver responsible for reading {@link ServiceBusMessage
          * messages} from a specific queue or subscription.
          *
@@ -1437,7 +1489,7 @@ public final class ServiceBusClientBuilder {
 
             return new ServiceBusReceiverAsyncClient(connectionProcessor.getFullyQualifiedNamespace(), entityPath,
                 entityType, receiverOptions, connectionProcessor, ServiceBusConstants.OPERATION_TIMEOUT,
-                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose);
+                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, transactionGroup);
         }
     }
 

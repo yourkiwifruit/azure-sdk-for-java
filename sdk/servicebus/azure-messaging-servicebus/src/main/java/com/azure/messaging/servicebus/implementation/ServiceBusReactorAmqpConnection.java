@@ -141,12 +141,13 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
     @Override
     public Mono<AmqpSendLink> createSendLink(String linkName, String entityPath, AmqpRetryOptions retryOptions,
          String transferEntityPath) {
-
-        return createSession(entityPath).cast(ServiceBusSession.class).flatMap(session -> {
+        // TODO (Hemant) Transfer cross entity change use 'linkName' instead of 'entityPath'
+        return createSession(linkName).cast(ServiceBusSession.class).flatMap(session -> {
             logger.verbose("Get or create sender link : '{}'", linkName);
+            logger.verbose("!!!! Get or create sender link using Amqp Session: "+ session.getSessionName() + "," + session);
             final AmqpRetryPolicy retryPolicy = RetryUtil.getRetryPolicy(retryOptions);
 
-            return session.createProducer(linkName, entityPath, retryOptions.getTryTimeout(),
+            return session.createProducer(linkName + entityPath, entityPath, retryOptions.getTryTimeout(),
                 retryPolicy, transferEntityPath).cast(AmqpSendLink.class);
         });
     }
