@@ -944,7 +944,8 @@ public final class ServiceBusReceiverAsyncClient implements AutoCloseable {
         }
 
         return connectionProcessor
-            .flatMap(connection -> connection.createSession(TRANSACTION_LINK_NAME))
+            .flatMap(connection -> connection.createSession(crossEntityTransaction ? CROSS_ENTITY_TRANSACTION_LINK_NAME
+                : TRANSACTION_LINK_NAME))
             .flatMap(transactionSession -> transactionSession.createTransaction())
             .map(transaction -> new ServiceBusTransactionContext(transaction.getTransactionId()));
     }

@@ -679,7 +679,8 @@ public final class ServiceBusClientBuilder {
             sessionReceiverClientBuilder = new ServiceBusSessionReceiverClientBuilder();
             processorClientOptions = new ServiceBusProcessorClientOptions()
                 .setMaxConcurrentCalls(1)
-                .setTracerProvider(tracerProvider);
+                .setTracerProvider(tracerProvider)
+                .setOperationTimeout(MessageUtils.getTotalTimeout(retryOptions));;
             sessionReceiverClientBuilder.maxConcurrentSessions(1);
         }
 
@@ -1133,7 +1134,8 @@ public final class ServiceBusClientBuilder {
             serviceBusReceiverClientBuilder = new ServiceBusReceiverClientBuilder();
             processorClientOptions = new ServiceBusProcessorClientOptions()
                 .setMaxConcurrentCalls(1)
-                .setTracerProvider(tracerProvider);
+                .setTracerProvider(tracerProvider)
+                .setOperationTimeout(MessageUtils.getTotalTimeout(retryOptions));
         }
 
         /**
@@ -1250,6 +1252,16 @@ public final class ServiceBusClientBuilder {
         public ServiceBusProcessorClientBuilder disableAutoComplete() {
             serviceBusReceiverClientBuilder.disableAutoComplete();
             processorClientOptions.setDisableAutoComplete(true);
+            return this;
+        }
+
+        /**
+         * Sets the transactionGroup to use
+         *
+         * @return The updated {@link ServiceBusProcessorClientBuilder} object.
+         */
+        public ServiceBusProcessorClientBuilder enableCrossEntityTransactions() {
+            serviceBusReceiverClientBuilder.enableCrossEntityTransactions();
             return this;
         }
 

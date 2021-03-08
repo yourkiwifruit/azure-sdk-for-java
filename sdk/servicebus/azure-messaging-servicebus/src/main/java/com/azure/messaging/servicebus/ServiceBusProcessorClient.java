@@ -15,6 +15,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Signal;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,6 +64,7 @@ public final class ServiceBusProcessorClient implements AutoCloseable {
     private final AtomicReference<ServiceBusReceiverAsyncClient> asyncClient = new AtomicReference<>();
     private final AtomicBoolean isRunning = new AtomicBoolean();
     private final TracerProvider tracerProvider;
+
     private ScheduledExecutorService scheduledExecutor;
 
     /**
@@ -151,6 +153,54 @@ public final class ServiceBusProcessorClient implements AutoCloseable {
      */
     public synchronized void stop() {
         isRunning.set(false);
+    }
+
+    /**
+     * Starts a new transaction on Service Bus. The {@link ServiceBusTransactionContext} should be passed along to all
+     * operations that need to be in this transaction.
+     *
+     * <p><strong>Creating and using a transaction</strong></p>
+     * {@codesnippet com.azure.messaging.servicebus.servicebusreceiverclient.committransaction#servicebustransactioncontext}
+     *
+     * @return A new {@link ServiceBusTransactionContext}.
+     *
+     * @throws IllegalStateException if the receiver is already disposed.
+     * @throws ServiceBusException if a transaction cannot be created.
+     */
+    public ServiceBusTransactionContext createTransaction() {
+        return asyncClient.get().createTransaction().block(processorOptions.getOperationTimeout());
+    }
+
+    /**
+     * Commits the transaction and all the operations associated with it.
+     *
+     * <p><strong>Creating and using a transaction</strong></p>
+     * {@codesnippet com.azure.messaging.servicebus.servicebusreceiverclient.committransaction#servicebustransactioncontext}
+     *
+     * @param transactionContext The transaction to be commit.
+     *
+     * @throws IllegalStateException if the receiver is already disposed.
+     * @throws NullPointerException if {@code transactionContext} or {@code transactionContext.transactionId} is null.
+     * @throws ServiceBusException if the transaction could not be committed.
+     */
+    public void commitTransaction(ServiceBusTransactionContext transactionContext) {
+        asyncClient.get().commitTransaction(transactionContext).block(processorOptions.getOperationTimeout());
+    }
+
+    /**
+     * Rollbacks the transaction given and all operations associated with it.
+     *
+     * <p><strong>Creating and using a transaction</strong></p>
+     * {@codesnippet com.azure.messaging.servicebus.servicebusreceiverclient.committransaction#servicebustransactioncontext}
+     *
+     * @param transactionContext The transaction to be rollback.
+     *
+     * @throws IllegalStateException if the receiver is alread disposed.
+     * @throws NullPointerException if {@code transactionContext} or {@code transactionContext.transactionId} is null.
+     * @throws ServiceBusException if the transaction could not be rolled back.
+     */
+    public void rollbackTransaction(ServiceBusTransactionContext transactionContext) {
+        asyncClient.get().rollbackTransaction(transactionContext).block(processorOptions.getOperationTimeout());
     }
 
     /**

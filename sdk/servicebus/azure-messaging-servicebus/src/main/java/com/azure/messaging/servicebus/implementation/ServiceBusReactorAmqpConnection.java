@@ -168,7 +168,8 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
     @Override
     public Mono<ServiceBusReceiveLink> createReceiveLink(String linkName, String entityPath,
         ServiceBusReceiveMode receiveMode, String transferEntityPath, MessagingEntityType entityType) {
-        return createSession(entityPath).cast(ServiceBusSession.class)
+        // chaneg  createSession(entityPath) - >  createSession(linkName)
+        return createSession(linkName).cast(ServiceBusSession.class)
             .flatMap(session -> {
                 logger.verbose("Get or create consumer for path: '{}'", entityPath);
                 final AmqpRetryPolicy retryPolicy = RetryUtil.getRetryPolicy(retryOptions);

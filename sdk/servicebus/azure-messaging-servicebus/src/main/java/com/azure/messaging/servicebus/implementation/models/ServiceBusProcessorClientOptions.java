@@ -7,6 +7,9 @@ import com.azure.core.amqp.implementation.TracerProvider;
 import com.azure.core.annotation.Fluent;
 import com.azure.messaging.servicebus.ServiceBusProcessorClient;
 
+import java.time.Duration;
+import java.util.Objects;
+
 /**
  * Additional options to configure {@link ServiceBusProcessorClient}.
  */
@@ -15,8 +18,28 @@ public final class ServiceBusProcessorClientOptions {
 
     private int maxConcurrentCalls = 1;
     private boolean disableAutoComplete;
+    private Duration operationTimeout;
 
     private TracerProvider tracerProvider;
+
+    /**
+     * The operation timeout.
+     *
+     * @return the operation timeout.
+     */
+    public Duration getOperationTimeout() {
+        return operationTimeout;
+    }
+
+    /**
+     * The operation timeout.
+     *
+     * @param operationTimeout the operation timeout.
+     */
+    public ServiceBusProcessorClientOptions setOperationTimeout(Duration operationTimeout) {
+        this.operationTimeout = operationTimeout;
+        return this;
+    }
 
     /**
      * Returns true if the auto-complete and auto-abandon feature is disabled.
@@ -56,7 +79,7 @@ public final class ServiceBusProcessorClientOptions {
 
     /**
      * Returns the {@link TracerProvider} instance that is used in {@link ServiceBusProcessorClient}.
-     * 
+     *
      * @return The {@link TracerProvider} instance that is used in {@link ServiceBusProcessorClient}.
      */
     public TracerProvider getTracerProvider() {
