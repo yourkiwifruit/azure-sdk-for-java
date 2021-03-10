@@ -524,29 +524,25 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
         final List<ServiceBusMessage> messages2 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES2);
         final List<ServiceBusMessage> messages3 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES3);
 
-        ServiceBusClientBuilder builder = getBuilder(useCredentials);
-        AtomicReference<ServiceBusTransactionContext>  transactionContext =  new AtomicReference();
+        ServiceBusClientBuilder builder = getBuilder(useCredentials).enableCrossEntityTransactions();
+        AtomicReference<ServiceBusTransactionContext>  transactionContext =  new AtomicReference<>();
         final ServiceBusSenderAsyncClient destination1_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination2_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue2)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination3_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue3)
             .buildAsyncClient();
 
        final ServiceBusReceiverAsyncClient destination1_receiver = builder
             .receiver()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .disableAutoComplete()
             .buildAsyncClient();
@@ -555,7 +551,6 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
         // Create an instance of the processor through the ServiceBusClientBuilder
         ServiceBusProcessorClient destination1_processor = builder
             .processor()
-            .enableCrossEntityTransactions()
             .disableAutoComplete()
             .queueName(queue1)
             .processMessage(context -> {
@@ -619,7 +614,12 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
 
 
     /**
-     * Test cross transaction entity when transaction is created by processor
+     * Test cross transaction entity when transaction is created by processor and processor first receive the message
+     *
+     * Error : When First Link is receiver and using Subscriber. The corresponding topic is taken as "send-via" queue But
+     * when we want to send message in this setup, we get this error. (Confirmed from service team (This could be added as feature in future))
+     * "Error occurred. Removing and disposing send link.
+     * com.azure.core.amqp.exception.AmqpException: Unauthorized access. 'Send' claim(s) are required to perform this operation. Resource"
      */
     @MethodSource("com.azure.messaging.servicebus.IntegrationTestBase#messagingEntityProvider")
     @ParameterizedTest
@@ -644,6 +644,8 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
         String queue2 = "queue-2"; // sender
         String queue3 = "queue-3"; // sender
         String queue4 = "queue-4"; // processorClient
+        String topic1 = "topic-1";
+        String subscriberName1 = "subscription";
 
         final boolean shareConnection = true;
         final String messageId = UUID.randomUUID().toString();
@@ -655,44 +657,37 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
         final List<ServiceBusMessage> messages2 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES2);
         final List<ServiceBusMessage> messages3 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES3);
 
-        ServiceBusClientBuilder builder = getBuilder(useCredentials);
-        AtomicReference<ServiceBusTransactionContext>  transactionContext =  new AtomicReference();
-        final ServiceBusSenderAsyncClient destination1_Sender = builder
-            .sender()
-            .enableCrossEntityTransactions()
-            .queueName(queue1)
-            .buildAsyncClient();
+        ServiceBusClientBuilder builder = getBuilder(useCredentials).enableCrossEntityTransactions();
+        AtomicReference<ServiceBusTransactionContext>  transactionContext =  new AtomicReference<>();
 
         final ServiceBusSenderAsyncClient destination2_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue2)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination3_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue3)
             .buildAsyncClient();
 
-        final ServiceBusReceiverAsyncClient destination1_receiver = builder
-            .receiver()
-            .enableCrossEntityTransactions()
-            .queueName(queue1)
-            .disableAutoComplete()
-            .buildAsyncClient();
-
         AtomicInteger messageProcessed = new AtomicInteger();
+
         // Create an instance of the processor through the ServiceBusClientBuilder
-        ServiceBusProcessorClient destination1_processor = builder
+        ServiceBusClientBuilder.ServiceBusProcessorClientBuilder destination1_builder = builder
             .processor()
-            .enableCrossEntityTransactions()
-            .disableAutoComplete()
-            .queueName(queue1)
+            .disableAutoComplete();
+            if (entityType == MessagingEntityType.QUEUE) {
+                destination1_builder.queueName(queue1);
+            } else {
+                destination1_builder.topicName(topic1).subscriptionName(subscriberName1);
+            }
+
+        ServiceBusProcessorClient destination1_processor = destination1_builder
             .processMessage(context -> {
                 ServiceBusReceivedMessage message = context.getMessage();
                     System.out.printf("!!!! Test Processor .. Processing message. MessageId: %s, Sequence #: %s. Contents: %s  %s %n", message.getMessageId(),
                     message.getSequenceNumber(), message.getBody(), transactionContext.get());
+
                     // We are completing just one message in this test.
                     if (messageProcessed.get() == 0 ) {
                         context.complete(new CompleteOptions().setTransactionContext(transactionContext.get()));
@@ -773,29 +768,26 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
         final List<ServiceBusMessage> messages2 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES2);
         final List<ServiceBusMessage> messages3 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES3);
 
-        ServiceBusClientBuilder builder = getBuilder(useCredentials);
-        AtomicReference<ServiceBusTransactionContext>  transactionContext =  new AtomicReference();
+        ServiceBusClientBuilder builder = getBuilder(useCredentials).enableCrossEntityTransactions();
+
+        AtomicReference<ServiceBusTransactionContext>  transactionContext =  new AtomicReference<>();
         final ServiceBusSenderAsyncClient destination1_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination2_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue2)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination3_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue3)
             .buildAsyncClient();
 
         final ServiceBusReceiverAsyncClient destination2_receiver = builder
             .receiver()
-            .enableCrossEntityTransactions()
             .queueName(queue2)
             .disableAutoComplete()
             .buildAsyncClient();

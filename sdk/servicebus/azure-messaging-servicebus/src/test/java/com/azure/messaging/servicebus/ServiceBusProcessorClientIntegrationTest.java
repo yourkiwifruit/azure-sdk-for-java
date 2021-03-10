@@ -72,29 +72,25 @@ class ServiceBusProcessorClientIntegrationTest extends IntegrationTestBase {
         final List<ServiceBusMessage> messages2 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES2);
         final List<ServiceBusMessage> messages3 = TestUtils.getServiceBusMessages(total, messageId, CONTENTS_BYTES3);
 
-        ServiceBusClientBuilder builder = getBuilder(useCredentials);
+        ServiceBusClientBuilder builder = getBuilder(useCredentials).enableCrossEntityTransactions();
 
         final ServiceBusSenderAsyncClient destination1_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination2_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue2)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination3_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue3)
             .buildAsyncClient();
 
         final ServiceBusReceiverAsyncClient destination1_receiver = builder
             .receiver()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .disableAutoComplete()
             .buildAsyncClient();

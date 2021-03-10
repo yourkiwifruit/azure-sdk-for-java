@@ -122,23 +122,20 @@ class ServiceBusSessionManagerIntegrationTest extends IntegrationTestBase {
         final List<ServiceBusMessage> messages1 = Collections.singletonList(message1);
         final List<ServiceBusMessage> messages2 = Collections.singletonList(message2);
 
-        ServiceBusClientBuilder builder = getBuilder(useCredentials);
+        ServiceBusClientBuilder builder = getBuilder(useCredentials).enableCrossEntityTransactions();
 
         final ServiceBusSenderAsyncClient destination1_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .buildAsyncClient();
 
         final ServiceBusSenderAsyncClient destination2_Sender = builder
             .sender()
-            .enableCrossEntityTransactions()
             .queueName(queue2)
             .buildAsyncClient();
 
         final ServiceBusReceiverAsyncClient destination1_receiver = builder
             .sessionReceiver()
-            .enableCrossEntityTransactions()
             .queueName(queue1)
             .disableAutoComplete()
             .buildAsyncClient()

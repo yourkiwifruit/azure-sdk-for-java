@@ -116,6 +116,7 @@ public final class ServiceBusClientBuilder {
     private Scheduler scheduler;
     private AmqpTransportType transport = AmqpTransportType.AMQP;
     private SslDomain.VerifyMode verifyMode;
+    private boolean crossEntityTransactions;
 
     /**
      * Keeps track of the open clients that were created from this builder when there is a shared connection.
@@ -167,6 +168,16 @@ public final class ServiceBusClientBuilder {
         }
 
         return credential(properties.getEndpoint().getHost(), tokenCredential);
+    }
+
+    /**
+     * Sets the transactionGroup to use
+     *
+     * @return The updated {@link ServiceBusSenderClientBuilder} object.
+     */
+    public ServiceBusClientBuilder enableCrossEntityTransactions() {
+        this.crossEntityTransactions = true;
+        return this;
     }
 
     private TokenCredential getTokenCredential(ConnectionStringProperties properties) {
@@ -557,7 +568,6 @@ public final class ServiceBusClientBuilder {
     public final class ServiceBusSenderClientBuilder {
         private String queueName;
         private String topicName;
-        private boolean crossEntityTransactions;
 
         private ServiceBusSenderClientBuilder() {
         }
@@ -583,16 +593,6 @@ public final class ServiceBusClientBuilder {
          */
         public ServiceBusSenderClientBuilder topicName(String topicName) {
             this.topicName = topicName;
-            return this;
-        }
-
-        /**
-         * Sets the transactionGroup to use
-         *
-         * @return The updated {@link ServiceBusSenderClientBuilder} object.
-         */
-        public ServiceBusSenderClientBuilder enableCrossEntityTransactions() {
-            this.crossEntityTransactions = true;
             return this;
         }
 
@@ -768,16 +768,6 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
-         * Sets the transactionGroup to use
-         *
-         * @return The updated {@link ServiceBusSessionProcessorClientBuilder} object.
-         */
-        public ServiceBusSessionProcessorClientBuilder enableCrossEntityTransactions() {
-            sessionReceiverClientBuilder.enableCrossEntityTransactions();
-            return this;
-        }
-
-        /**
          * The message processing callback for the processor that will be executed when a message is received.
          * @param processMessage The message processing consumer that will be executed when a message is received.
          *
@@ -871,7 +861,6 @@ public final class ServiceBusClientBuilder {
         private String subscriptionName;
         private String topicName;
         private Duration maxAutoLockRenewDuration = MAX_LOCK_RENEW_DEFAULT_DURATION;
-        private boolean crossEntityTransactions;
 
         private ServiceBusSessionReceiverClientBuilder() {
         }
@@ -996,16 +985,6 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
-         * Sets the transactionGroup to use
-         *
-         * @return The updated {@link ServiceBusSessionReceiverClientBuilder} object.
-         */
-        public ServiceBusSessionReceiverClientBuilder enableCrossEntityTransactions() {
-            this.crossEntityTransactions = true;
-            return this;
-        }
-
-        /**
          * Creates an <b>asynchronous</b>, <b>session-aware</b> Service Bus receiver responsible for reading {@link
          * ServiceBusMessage messages} from a specific queue or subscription.
          *
@@ -1043,7 +1022,8 @@ public final class ServiceBusClientBuilder {
 
             return new ServiceBusReceiverAsyncClient(connectionProcessor.getFullyQualifiedNamespace(), entityPath,
                 entityType, receiverOptions, connectionProcessor, ServiceBusConstants.OPERATION_TIMEOUT,
-                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, sessionManager, crossEntityTransactions);
+                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, sessionManager,
+                crossEntityTransactions);
         }
 
         /**
@@ -1256,16 +1236,6 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
-         * Sets the transactionGroup to use
-         *
-         * @return The updated {@link ServiceBusProcessorClientBuilder} object.
-         */
-        public ServiceBusProcessorClientBuilder enableCrossEntityTransactions() {
-            serviceBusReceiverClientBuilder.enableCrossEntityTransactions();
-            return this;
-        }
-
-        /**
          * Creates Service Bus message processor responsible for reading {@link ServiceBusReceivedMessage
          * messages} from a specific queue or subscription.
          *
@@ -1304,7 +1274,6 @@ public final class ServiceBusClientBuilder {
         private String subscriptionName;
         private String topicName;
         private Duration maxAutoLockRenewDuration = MAX_LOCK_RENEW_DEFAULT_DURATION;
-        private boolean crossEntityTransactions;
 
         private ServiceBusReceiverClientBuilder() {
         }
@@ -1424,16 +1393,6 @@ public final class ServiceBusClientBuilder {
         }
 
         /**
-         * Sets the transactionGroup to use
-         *
-         * @return The updated {@link ServiceBusReceiverClientBuilder} object.
-         */
-        public ServiceBusReceiverClientBuilder enableCrossEntityTransactions() {
-            this.crossEntityTransactions = true;
-            return this;
-        }
-
-        /**
          * Creates an <b>asynchronous</b> Service Bus receiver responsible for reading {@link ServiceBusMessage
          * messages} from a specific queue or subscription.
          *
@@ -1493,7 +1452,8 @@ public final class ServiceBusClientBuilder {
 
             return new ServiceBusReceiverAsyncClient(connectionProcessor.getFullyQualifiedNamespace(), entityPath,
                 entityType, receiverOptions, connectionProcessor, ServiceBusConstants.OPERATION_TIMEOUT,
-                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose, crossEntityTransactions);
+                tracerProvider, messageSerializer, ServiceBusClientBuilder.this::onClientClose,
+                crossEntityTransactions);
         }
     }
 
