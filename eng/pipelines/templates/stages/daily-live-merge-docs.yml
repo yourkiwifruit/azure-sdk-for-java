@@ -3,6 +3,5 @@ steps:
   parameters:
     RepoName: 'Azure'
     RepoOwner: 'azure-docs-sdk-java'
-    WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
-    ScriptDirectory: ${{ parameters.WorkingDirectory }}/${{ parameters.ScriptDirectory }}
+    WorkingDirectory: $(Build.SourcesDirectory)/repo
     PRLabels: 'Docs'
