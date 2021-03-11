@@ -11,9 +11,9 @@ import com.azure.core.credential.AzureSasCredential;
 import com.azure.core.http.HttpPipeline;
 import com.azure.core.http.rest.Response;
 import com.azure.core.models.CloudEvent;
+import com.azure.core.util.BinaryData;
 import com.azure.core.util.Context;
 import com.azure.core.util.logging.ClientLogger;
-import com.azure.core.util.serializer.ObjectSerializer;
 import com.azure.core.util.tracing.TracerProxy;
 import com.azure.messaging.eventgrid.implementation.Constants;
 import com.azure.messaging.eventgrid.implementation.EventGridPublisherClientImpl;
@@ -43,11 +43,29 @@ import static com.azure.core.util.FluxUtil.withContext;
 import static com.azure.core.util.tracing.Tracer.AZ_TRACING_NAMESPACE_KEY;
 
 /**
- * A service client that publishes events to an EventGrid topic or domain. Use {@link EventGridPublisherClientBuilder}
- * to create an instance of this client. This uses Project Reactor (https://projectreactor.io/) to handle asynchronous
- * programming.
+ * A service client that publishes events to an EventGrid topic or domain asynchronously.
+ * Use {@link EventGridPublisherClientBuilder} to create an instance of this client.
+ *
+ * <p><strong>Create EventGridPublisherAsyncClient for CloudEvent Samples</strong></p>
+ * {@codesnippet com.azure.messaging.eventgrid.EventGridPublisherAsyncClient#CreateCloudEventClient}
+ *
+ * <p><strong>Send CloudEvent Samples</strong></p>
+ * {@codesnippet com.azure.messaging.eventgrid.EventGridPublisherAsyncClient#SendCloudEvent}
+ *
+ * <p><strong>Create EventGridPublisherAsyncClient for EventGridEvent Samples</strong></p>
+ * {@codesnippet com.azure.messaging.eventgrid.EventGridPublisherAsyncClient#CreateEventGridEventClient}
+ *
+ * <p><strong>Send EventGridEvent Samples</strong></p>
+ * {@codesnippet com.azure.messaging.eventgrid.EventGridPublisherAsyncClient#SendEventGridEvent}
+ *
+ * <p><strong>Create EventGridPublisherAsyncClient for Custom Event Schema Samples</strong></p>
+ * {@codesnippet com.azure.messaging.eventgrid.EventGridPublisherAsyncClient#CreateCustomEventClient}
+ *
+ * <p><strong>Send Custom Event Schema Samples</strong></p>
+ * {@codesnippet com.azure.messaging.eventgrid.EventGridPublisherAsyncClient#SendCustomEvent}
+ *
  * @see EventGridEvent
- * @see CloudEvent
+ * @see com.azure.core.models.CloudEvent
  */
 @ServiceClient(builder = EventGridPublisherClientBuilder.class, isAsync = true)
 public final class EventGridPublisherAsyncClient<T> {
@@ -58,8 +76,6 @@ public final class EventGridPublisherAsyncClient<T> {
 
     private final ClientLogger logger = new ClientLogger(EventGridPublisherAsyncClient.class);
 
-    private final ObjectSerializer eventDataSerializer;
-
     private final Class<T> eventClass;
 
     private static final DateTimeFormatter SAS_DATE_TIME_FORMATER = DateTimeFormatter.ofPattern("M/d/yyyy h:m:s a");
@@ -69,13 +85,12 @@ public final class EventGridPublisherAsyncClient<T> {
     private static final ClientLogger LOGGER = new ClientLogger(EventGridPublisherAsyncClient.class);
 
     EventGridPublisherAsyncClient(HttpPipeline pipeline, String hostname, EventGridServiceVersion serviceVersion,
-        ObjectSerializer eventDataSerializer, Class<T> eventClass) {
+        Class<T> eventClass) {
         this.impl = new EventGridPublisherClientImplBuilder()
             .pipeline(pipeline)
             .apiVersion(serviceVersion.getVersion())
             .buildClient();
         this.hostname = hostname;
-        this.eventDataSerializer = eventDataSerializer;
         this.eventClass = eventClass;
     }
 
@@ -169,7 +184,7 @@ public final class EventGridPublisherAsyncClient<T> {
         } else if (this.eventClass == EventGridEvent.class) {
             return this.sendEventGridEvents((Iterable<EventGridEvent>) events, context);
         } else {
-            return this.sendCustomEvents((Iterable<Object>) events, context);
+            return this.sendCustomEvents((Iterable<BinaryData>) events, context);
         }
     }
 
@@ -192,7 +207,7 @@ public final class EventGridPublisherAsyncClient<T> {
         } else if (this.eventClass == EventGridEvent.class) {
             return this.sendEventGridEventsWithResponse((Iterable<EventGridEvent>) events, context);
         } else {
-            return this.sendCustomEventsWithResponse((Iterable<Object>) events, context);
+            return this.sendCustomEventsWithResponse((Iterable<BinaryData>) events, context);
         }
     }
 
@@ -233,18 +248,13 @@ public final class EventGridPublisherAsyncClient<T> {
                 finalContext.addData(AZ_TRACING_NAMESPACE_KEY, Constants.EVENT_GRID_TRACING_NAMESPACE_VALUE)));
     }
 
-    Mono<Void> sendCustomEvents(Iterable<Object> events, Context context) {
+    Mono<Void> sendCustomEvents(Iterable<BinaryData> events, Context context) {
         if (events == null) {
             return monoError(logger, new NullPointerException("'events' cannot be null."));
         }
         final Context finalContext = context != null ? context : Context.NONE;
         return Flux.fromIterable(events)
-            .map(event -> {
-                if (eventDataSerializer != null) {
-                    return new RawValue(new String(eventDataSerializer.serializeToBytes(event), StandardCharsets.UTF_8));
-                }
-                return event;
-            })
+            .map(event -> (Object) new RawValue(event.toString()))
             .collectList()
             .flatMap(list -> this.impl.publishCustomEventEventsAsync(this.hostname, list,
                 finalContext.addData(AZ_TRACING_NAMESPACE_KEY, Constants.EVENT_GRID_TRACING_NAMESPACE_VALUE)));
@@ -274,18 +284,13 @@ public final class EventGridPublisherAsyncClient<T> {
                 finalContext.addData(AZ_TRACING_NAMESPACE_KEY, Constants.EVENT_GRID_TRACING_NAMESPACE_VALUE)));
     }
 
-    Mono<Response<Void>> sendCustomEventsWithResponse(Iterable<Object> events, Context context) {
+    Mono<Response<Void>> sendCustomEventsWithResponse(Iterable<BinaryData> events, Context context) {
         if (events == null) {
             return monoError(logger, new NullPointerException("'events' cannot be null."));
         }
         final Context finalContext = context != null ? context : Context.NONE;
         return Flux.fromIterable(events)
-            .map(event -> {
-                if (eventDataSerializer != null) {
-                    return new RawValue(new String(eventDataSerializer.serializeToBytes(event), StandardCharsets.UTF_8));
-                }
-                return event;
-            })
+            .map(event -> (Object) new RawValue(event.toString()))
             .collectList()
             .flatMap(list -> this.impl.publishCustomEventEventsWithResponseAsync(this.hostname, list,
                 finalContext.addData(AZ_TRACING_NAMESPACE_KEY, Constants.EVENT_GRID_TRACING_NAMESPACE_VALUE)));
