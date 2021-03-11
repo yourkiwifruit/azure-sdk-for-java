@@ -706,7 +706,7 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
             })
             .buildProcessorClient();
 
-        ServiceBusTransactionContext transactionId = destination1_processor.createTransaction();
+        ServiceBusTransactionContext transactionId = destination2_Sender.createTransaction().block();
         transactionContext.set(transactionId);
 
         System.out.println("!!!! Test transactionId " + transactionId);
@@ -721,7 +721,7 @@ class ServiceBusSenderAsyncClientIntegrationTest extends IntegrationTestBase {
         destination3_Sender.sendMessages(messages3, transactionContext.get()).block(TIMEOUT);
         System.out.println("!!!! Test Processor  sent messages to queue 3");
 
-        destination1_processor.commitTransaction(transactionId);
+        destination2_Sender.commitTransaction(transactionId);
 
         System.out.println("!!!! commitTransaction     processor stop");
 

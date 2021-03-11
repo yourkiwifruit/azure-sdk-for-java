@@ -167,9 +167,9 @@ public final class ServiceBusProcessorClient implements AutoCloseable {
      * @throws IllegalStateException if the receiver is already disposed.
      * @throws ServiceBusException if a transaction cannot be created.
      */
-    public ServiceBusTransactionContext createTransaction() {
-        return asyncClient.get().createTransaction().block(processorOptions.getOperationTimeout());
-    }
+   // public ServiceBusTransactionContext createTransaction() {
+   //     return asyncClient.get().createTransaction().block(processorOptions.getOperationTimeout());
+   // }
 
     /**
      * Commits the transaction and all the operations associated with it.
@@ -183,9 +183,9 @@ public final class ServiceBusProcessorClient implements AutoCloseable {
      * @throws NullPointerException if {@code transactionContext} or {@code transactionContext.transactionId} is null.
      * @throws ServiceBusException if the transaction could not be committed.
      */
-    public void commitTransaction(ServiceBusTransactionContext transactionContext) {
-        asyncClient.get().commitTransaction(transactionContext).block(processorOptions.getOperationTimeout());
-    }
+    //public void commitTransaction(ServiceBusTransactionContext transactionContext) {
+    //    asyncClient.get().commitTransaction(transactionContext).block(processorOptions.getOperationTimeout());
+   // }
 
     /**
      * Rollbacks the transaction given and all operations associated with it.
@@ -199,9 +199,9 @@ public final class ServiceBusProcessorClient implements AutoCloseable {
      * @throws NullPointerException if {@code transactionContext} or {@code transactionContext.transactionId} is null.
      * @throws ServiceBusException if the transaction could not be rolled back.
      */
-    public void rollbackTransaction(ServiceBusTransactionContext transactionContext) {
-        asyncClient.get().rollbackTransaction(transactionContext).block(processorOptions.getOperationTimeout());
-    }
+    //public void rollbackTransaction(ServiceBusTransactionContext transactionContext) {
+    //    asyncClient.get().rollbackTransaction(transactionContext).block(processorOptions.getOperationTimeout());
+    //}
 
     /**
      * Stops message processing and closes the processor. The receiving links and sessions are closed and calling
