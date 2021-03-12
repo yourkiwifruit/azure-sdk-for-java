@@ -3,5 +3,5 @@ steps:
   parameters:
     TargetDocRepoOwner: 'Azure'
     TargetDocRepoName: 'azure-docs-sdk-java'
-    WorkingDirectory: '$(Build.SourcesDirectory)/repo'
+    WorkingDirectory: '$(Build.SourcesDirectory)'
     PRLabels: 'Docs'

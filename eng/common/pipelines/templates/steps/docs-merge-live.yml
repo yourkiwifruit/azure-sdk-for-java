@@ -16,10 +16,10 @@ parameters:
 
 steps:
 - pwsh: |
-    git clone https://github.com/${{ parameters.TargetDocRepoOwner }}/${{ parameters.TargetDocRepoName }} ${{ parameters.WorkingDirectory }}
+    git clone https://github.com/${{ parameters.TargetDocRepoOwner }}/${{ parameters.TargetDocRepoName }} ${{ parameters.WorkingDirectory }}/repo
 
     try {
-      Push-Location ${{ parameters.WorkingDirectory }}
+      Push-Location ${{ parameters.WorkingDirectory }}/repo
 
       Write-Host "git checkout ${{ parameters.SourceBranchName }}"
       git checkout ${{ parameters.SourceBranchName }}
@@ -30,6 +30,7 @@ steps:
   ignoreLASTEXITCODE: false
 - pwsh: |
     $ciLastCommit = git log --author="VSC-Service-Account" --pretty=format:'%H' -n 1
+    Write-Host $ciLastCommi
     echo "##vso[task.setvariable variable=CICommit]$ciLastCommit"
   workingDirectory: ${{ parameters.WorkingDirectory }}
   displayName: Fetch the last commit for Job CI commits.
@@ -50,7 +51,7 @@ steps:
     BaseBranchName: "for-release"
     CommitMsg: "Daily merge from most recent CI job commit to live."
     PRTitle: "Merge from recent CI job to live"
-    WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
+    WorkingDirectory: ${{ parameters.WorkingDirectory }}
     GHReviewersVariable: ${{ parameters.GHReviewersVariable }}
     GHTeamReviewersVariable: ${{ parameters.GHTeamReviewersVariable }}
     CloseAfterOpenForTesting: $false
