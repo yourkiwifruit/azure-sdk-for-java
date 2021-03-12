@@ -45,6 +45,7 @@ steps:
   parameters:
     RepoName: ${{ parameters.TargetDocRepoName }}
     RepoOwner: ${{ parameters.TargetDocRepoOwner }}
+    PROwner: "origin"
     PRBranchName: "live"
     BaseBranchName: "for-release"
     CommitMsg: "Daily merge from most recent CI job commit to live."

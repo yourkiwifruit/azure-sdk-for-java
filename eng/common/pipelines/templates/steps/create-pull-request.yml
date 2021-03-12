@@ -40,7 +40,7 @@ steps:
   inputs:
     pwsh: true
     workingDirectory: ${{ parameters.WorkingDirectory }}
-    filePath: ${{ parameters.ScriptDirectory }}/Submit-PullRequest.ps1
+    filePath: ${{ parameters.WorkingDirectory }}/${{ parameters.ScriptDirectory }}/Submit-PullRequest.ps1
     arguments: >
       -RepoOwner "${{ parameters.RepoOwner }}"
       -RepoName "$(RepoNameWithoutOwner)"
