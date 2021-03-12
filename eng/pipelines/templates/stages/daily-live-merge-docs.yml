@@ -4,4 +4,4 @@ steps:
     TargetDocRepoOwner: 'Azure'
     TargetDocRepoName: 'azure-docs-sdk-java'
     WorkingDirectory: '$(Build.SourcesDirectory)'
-    PRLabels: 'Docs'
+    PRLabels: 'Docs, auto-merge'

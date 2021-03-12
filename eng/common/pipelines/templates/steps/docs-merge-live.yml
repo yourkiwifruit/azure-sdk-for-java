@@ -30,7 +30,7 @@ steps:
   ignoreLASTEXITCODE: false
 - pwsh: |
     $ciLastCommit = git log --author="VSC-Service-Account" --pretty=format:'%H' -n 1
-    Write-Host $ciLastCommi
+    Write-Host $ciLastCommit
     echo "##vso[task.setvariable variable=CICommit]$ciLastCommit"
   workingDirectory: ${{ parameters.WorkingDirectory }}
   displayName: Fetch the last commit for Job CI commits.
@@ -39,7 +39,7 @@ steps:
     git reset --hard $(CICommit)
     git checkout -b for-release
   displayName: 'Checkout new branch for-release'
-  workingDirectory: ${{ parameters.WorkingDirectory }}
+  workingDirectory: ${{ parameters.WorkingDirectory }}/repo
   ignoreLASTEXITCODE: false
 
 - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
