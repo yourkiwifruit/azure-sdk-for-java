@@ -1,7 +1,7 @@
 steps:
 - template: /eng/common/pipelines/templates/steps/docs-merge-live.yml
   parameters:
-    RepoName: 'Azure'
-    RepoOwner: 'azure-docs-sdk-java'
+    TargetDocRepoOwner: 'Azure'
+    TargetDocRepoName: 'azure-docs-sdk-java'
     WorkingDirectory: $(Build.SourcesDirectory)/repo
     PRLabels: 'Docs'

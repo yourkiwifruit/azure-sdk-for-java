@@ -8,8 +8,8 @@ parameters:
   ScriptDirectory: eng/common/scripts
   TargetDocRepoName: ''
   TargetDocRepoOwner: ''
-  PRBranchName: 'master-rdme'
-  SourceBranchName: 'master-test'
+  PRBranchName: 'live'
+  SourceBranchName: 'master'
   PRLabels: 'auto-merge'
   OnboardingBranch: ''
   SkipPackageJson: false
