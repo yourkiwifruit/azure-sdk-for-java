@@ -30,8 +30,8 @@ steps:
   parameters:
     RepoName: ${{ parameters.TargetDocRepoName }}
     RepoOwner: ${{ parameters.TargetDocRepoOwner }}
-    PRBranchName: 'live'
-    BaseBranchName: 'for-release'
+    PRBranchName: "live"
+    BaseBranchName: "for-release"
     CommitMsg: "Daily merge from most recent CI job commit to live."
     PRTitle: "Merge from recent CI job to live"
     WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
