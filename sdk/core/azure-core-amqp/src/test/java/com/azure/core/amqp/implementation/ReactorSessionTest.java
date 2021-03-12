@@ -107,7 +107,7 @@ public class ReactorSessionTest {
 
         final AmqpRetryOptions options = new AmqpRetryOptions().setTryTimeout(TIMEOUT);
         this.reactorSession = new ReactorSession(session, handler, NAME, reactorProvider, reactorHandlerProvider,
-            cbsNodeSupplier, tokenManagerProvider, serializer, options);
+            cbsNodeSupplier, tokenManagerProvider, serializer, options, false);
     }
 
     @AfterEach

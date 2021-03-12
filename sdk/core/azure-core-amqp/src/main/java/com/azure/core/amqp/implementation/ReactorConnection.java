@@ -175,6 +175,14 @@ public class ReactorConnection implements AmqpConnection {
      */
     @Override
     public Mono<AmqpSession> createSession(String sessionName) {
+        return createSession(sessionName, false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Mono<AmqpSession> createSession(String sessionName, boolean coordinatorRequired) {
         if (isDisposed()) {
             return Mono.error(logger.logExceptionAsError(new IllegalStateException(String.format(
                 "connectionId[%s]: Connection is disposed. Cannot create session '%s'.", connectionId, sessionName))));
@@ -192,18 +200,18 @@ public class ReactorConnection implements AmqpConnection {
                 final Session session = connection.session();
 
                 BaseHandler.setHandler(session, handler);
-                final AmqpSession amqpSession = createSession(key, session, handler);
+                final AmqpSession amqpSession = createSession(key, session, handler, coordinatorRequired);
                 final Disposable subscription = amqpSession.getEndpointStates()
                     .subscribe(state -> {
                     }, error -> {
-                            logger.info("connectionId[{}] sessionName[{}]: Error occurred. Removing and disposing"
-                                    + " session.", connectionId, sessionName, error);
-                            removeSession(key);
-                        }, () -> {
-                            logger.info("connectionId[{}] sessionName[{}]: Complete. Removing and disposing session.",
-                                connectionId, sessionName);
-                            removeSession(key);
-                        });
+                        logger.info("connectionId[{}] sessionName[{}]: Error occurred. Removing and disposing"
+                            + " session.", connectionId, sessionName, error);
+                        removeSession(key);
+                    }, () -> {
+                        logger.info("connectionId[{}] sessionName[{}]: Complete. Removing and disposing session.",
+                            connectionId, sessionName);
+                        removeSession(key);
+                    });
 
                 return new SessionSubscription(amqpSession, subscription);
             });
@@ -222,8 +230,25 @@ public class ReactorConnection implements AmqpConnection {
      * @return A new instance of AMQP session.
      */
     protected AmqpSession createSession(String sessionName, Session session, SessionHandler handler) {
-        return new ReactorSession(session, handler, sessionName, reactorProvider, handlerProvider,
-            getClaimsBasedSecurityNode(), tokenManagerProvider, messageSerializer, connectionOptions.getRetry());
+        return createSession(sessionName, session, handler, false);
+    }
+
+
+    /**
+     * Creates a new AMQP session with the given parameters.
+     *
+     * @param sessionName Name of the AMQP session.
+     * @param session The reactor session associated with this session.
+     * @param handler Session handler for the reactor session.
+     *
+     * @return A new instance of AMQP session.
+     */
+    protected AmqpSession createSession(String sessionName, Session session, SessionHandler handler,
+        boolean coordinatorRequired) {
+        ReactorSession reactorSession = new ReactorSession(session, handler, sessionName, reactorProvider, handlerProvider,
+            getClaimsBasedSecurityNode(), tokenManagerProvider, messageSerializer, connectionOptions.getRetry(),
+            coordinatorRequired);
+        return reactorSession;
     }
 
     /**

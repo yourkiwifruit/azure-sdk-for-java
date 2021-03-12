@@ -402,7 +402,8 @@ public final class ServiceBusClientBuilder {
                     final String connectionId = StringUtil.getRandomString("MF");
 
                     return (ServiceBusAmqpConnection) new ServiceBusReactorAmqpConnection(connectionId,
-                        connectionOptions, provider, handlerProvider, tokenManagerProvider, serializer);
+                        connectionOptions, provider, handlerProvider, tokenManagerProvider, serializer,
+                        crossEntityTransactions);
                 }).repeat();
 
                 sharedConnection = connectionFlux.subscribeWith(new ServiceBusConnectionProcessor(

@@ -37,6 +37,7 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
     private static final String MANAGEMENT_SESSION_NAME = "mgmt-session";
     private static final String MANAGEMENT_LINK_NAME = "mgmt";
     private static final String MANAGEMENT_ADDRESS = "$management";
+    private static final String CROSS_ENTITY_TRANSACTION_LINK_NAME = "crossentity-coordinator";
 
     private final ClientLogger logger = new ClientLogger(ServiceBusReactorAmqpConnection.class);
     /**
@@ -54,6 +55,7 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
     private final Scheduler scheduler;
     private final String fullyQualifiedNamespace;
     private final CbsAuthorizationType authorizationType;
+    private final boolean crossEntityTransaction;
 
     /**
      * Creates a new AMQP connection that uses proton-j.
@@ -67,7 +69,7 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
      */
     public ServiceBusReactorAmqpConnection(String connectionId, ConnectionOptions connectionOptions,
         ReactorProvider reactorProvider, ReactorHandlerProvider handlerProvider,
-        TokenManagerProvider tokenManagerProvider, MessageSerializer messageSerializer) {
+        TokenManagerProvider tokenManagerProvider, MessageSerializer messageSerializer, boolean crossEntityTransaction) {
         super(connectionId, connectionOptions, reactorProvider, handlerProvider, tokenManagerProvider,
             messageSerializer, SenderSettleMode.SETTLED, ReceiverSettleMode.FIRST);
 
@@ -80,6 +82,7 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
         this.messageSerializer = messageSerializer;
         this.scheduler = connectionOptions.getScheduler();
         this.fullyQualifiedNamespace = connectionOptions.getFullyQualifiedNamespace();
+        this.crossEntityTransaction = crossEntityTransaction;
     }
 
     @Override
@@ -151,6 +154,13 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
         });
     }
 
+    @Override
+    public Mono<AmqpSession> createSession(String sessionName) {
+        // if  crossEntityTransaction =  true, we should first create Coordinator producer link
+        return super.createSession(crossEntityTransaction ? CROSS_ENTITY_TRANSACTION_LINK_NAME : sessionName,
+            crossEntityTransaction);
+    }
+
     /**
      * Creates or gets an existing receive link. The same link is returned if there is an existing receive link with the
      * same {@code linkName}. Otherwise, a new link is created and returned.
@@ -215,8 +225,8 @@ public class ServiceBusReactorAmqpConnection extends ReactorConnection implement
     }
 
     @Override
-    protected AmqpSession createSession(String sessionName, Session session, SessionHandler handler) {
+    protected AmqpSession createSession(String sessionName, Session session, SessionHandler handler, boolean coordinatorRequired) {
         return new ServiceBusReactorSession(session, handler, sessionName, reactorProvider, handlerProvider,
-            getClaimsBasedSecurityNode(), tokenManagerProvider, messageSerializer, retryOptions);
+            getClaimsBasedSecurityNode(), tokenManagerProvider, messageSerializer, retryOptions, coordinatorRequired);
     }
 }

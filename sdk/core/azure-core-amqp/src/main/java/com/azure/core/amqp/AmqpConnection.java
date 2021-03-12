@@ -58,6 +58,15 @@ public interface AmqpConnection extends Disposable {
     Mono<AmqpSession> createSession(String sessionName);
 
     /**
+     * Creates a new session with the given session name.
+     *
+     * @param sessionName Name of the session.
+     * @param coordinatorRequired if coordinator is required.
+     * @return The AMQP session that was created.
+     */
+    Mono<AmqpSession> createSession(String sessionName, boolean coordinatorRequired);
+
+    /**
      * Removes a session with the {@code sessionName} from the AMQP connection.
      *
      * @param sessionName Name of the session to remove.

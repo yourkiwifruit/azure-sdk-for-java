@@ -46,6 +46,7 @@ import static com.azure.core.amqp.implementation.ClientConstants.NOT_APPLICABLE;
  */
 public class ReactorSession implements AmqpSession {
     private static final String TRANSACTION_LINK_NAME = "coordinator";
+    private static final String CROSS_ENTITY_TRANSACTION_LINK_NAME = "crossentity-coordinator";
     private final ConcurrentMap<String, LinkSubscription<AmqpSendLink>> openSendLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, LinkSubscription<AmqpReceiveLink>> openReceiveLinks = new ConcurrentHashMap<>();
 
@@ -67,6 +68,13 @@ public class ReactorSession implements AmqpSession {
 
     private final AtomicReference<TransactionCoordinator> transactionCoordinator = new AtomicReference<>();
 
+    public ReactorSession(Session session, SessionHandler sessionHandler, String sessionName, ReactorProvider provider,
+        ReactorHandlerProvider handlerProvider, Mono<ClaimsBasedSecurityNode> cbsNodeSupplier,
+        TokenManagerProvider tokenManagerProvider, MessageSerializer messageSerializer,
+        AmqpRetryOptions retryOptions){
+        this(session, sessionHandler, sessionName, provider, handlerProvider, cbsNodeSupplier, tokenManagerProvider,
+            messageSerializer, retryOptions, false);
+    }
     /**
      * Creates a new AMQP session using proton-j.
      *
@@ -83,7 +91,7 @@ public class ReactorSession implements AmqpSession {
     public ReactorSession(Session session, SessionHandler sessionHandler, String sessionName, ReactorProvider provider,
         ReactorHandlerProvider handlerProvider, Mono<ClaimsBasedSecurityNode> cbsNodeSupplier,
         TokenManagerProvider tokenManagerProvider, MessageSerializer messageSerializer,
-        AmqpRetryOptions retryOptions) {
+        AmqpRetryOptions retryOptions, boolean coordinatorRequired) {
         this.session = session;
         this.sessionHandler = sessionHandler;
         this.handlerProvider = handlerProvider;
@@ -106,6 +114,14 @@ public class ReactorSession implements AmqpSession {
             .subscribeWith(ReplayProcessor.cacheLastOrDefault(AmqpEndpointState.UNINITIALIZED));
 
         session.open();
+
+        // setup coordinator only id enable cross Entoty transaction is setup.
+        if (coordinatorRequired) {
+           LinkSubscription<AmqpSendLink> sendLinkCoordinator = getSubscription(TRANSACTION_LINK_NAME,
+               TRANSACTION_LINK_NAME, new Coordinator(), null, retryOptions, null);
+            openSendLinks.put(TRANSACTION_LINK_NAME, sendLinkCoordinator);
+            transactionCoordinator.set(new TransactionCoordinator(sendLinkCoordinator.getLink(), messageSerializer));
+        }
     }
 
     Session session() {
@@ -148,6 +164,10 @@ public class ReactorSession implements AmqpSession {
 
         openReceiveLinks.forEach((key, link) -> link.dispose(errorCondition));
         openSendLinks.forEach((key, link) -> link.dispose(errorCondition));
+
+        if (transactionCoordinator.get() != null) {
+            transactionCoordinator.get().dispose();
+        }
     }
 
     /**
@@ -223,7 +243,7 @@ public class ReactorSession implements AmqpSession {
      *
      * @return {@link Mono} of {@link TransactionCoordinator}
      */
-    private Mono<TransactionCoordinator> createTransactionCoordinator() {
+    protected Mono<TransactionCoordinator> createTransactionCoordinator() {
         if (isDisposed()) {
             return Mono.error(logger.logExceptionAsError(new IllegalStateException(String.format(
                 "Cannot create coordinator send link '%s' from a closed session.", TRANSACTION_LINK_NAME))));

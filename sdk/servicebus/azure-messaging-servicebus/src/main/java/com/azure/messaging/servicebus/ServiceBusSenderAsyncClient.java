@@ -504,9 +504,9 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
         }
 
         return connectionProcessor
-            .flatMap(connection -> connection.createSession(crossEntityTransaction
+            .flatMap(connection -> connection.createSession(/*crossEntityTransaction
                 ? CROSS_ENTITY_TRANSACTION_LINK_NAME
-                : TRANSACTION_LINK_NAME))
+                : */TRANSACTION_LINK_NAME))
             .flatMap(transactionSession -> {
                 System.out.println(getClass().getName() + " !!!! transactionSession: "
                     + transactionSession.getSessionName() + " -> " + transactionSession);
@@ -535,9 +535,9 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
         }
 
         return connectionProcessor
-            .flatMap(connection -> connection.createSession(crossEntityTransaction
+            .flatMap(connection -> connection.createSession(/*crossEntityTransaction
                 ? CROSS_ENTITY_TRANSACTION_LINK_NAME
-                : TRANSACTION_LINK_NAME))
+                : */TRANSACTION_LINK_NAME))
             .flatMap(transactionSession -> transactionSession.commitTransaction(new AmqpTransaction(
                 transactionContext.getTransactionId())));
     }
@@ -733,16 +733,8 @@ public final class ServiceBusSenderAsyncClient implements AutoCloseable {
 
     private Mono<AmqpSendLink> getSendLink() {
         return connectionProcessor
-            /*.flatMap(connection -> {
-                if (!CoreUtils.isNullOrEmpty(viaEntityName)) {
-                    return connection.createSendLink("VIA-".concat(viaEntityName), viaEntityName, retryOptions,
-                        entityName);
-                } else {
-                    return connection.createSendLink(entityName, entityName, retryOptions, null);
-                }
-            })*/
-            .flatMap(connection -> connection.createSendLink(crossEntityTransaction
-                    ? CROSS_ENTITY_TRANSACTION_LINK_NAME : entityName, entityName, retryOptions, null))
+            .flatMap(connection -> connection.createSendLink(/*crossEntityTransaction
+                    ? CROSS_ENTITY_TRANSACTION_LINK_NAME : */entityName, entityName, retryOptions, null))
             .doOnNext(next -> linkName.compareAndSet(null, next.getLinkName()));
     }
 
