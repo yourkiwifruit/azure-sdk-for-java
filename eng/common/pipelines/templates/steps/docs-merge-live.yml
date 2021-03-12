@@ -53,3 +53,4 @@ steps:
     PRTitle: "Merge from recent CI job to live"
     WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
     CloseAfterOpenForTesting: $false
+    SkipCheckingForChanges: $true
