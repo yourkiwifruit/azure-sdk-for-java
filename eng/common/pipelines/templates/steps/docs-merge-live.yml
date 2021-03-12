@@ -51,7 +51,5 @@ steps:
     BaseBranchName: "for-release"
     CommitMsg: "Daily merge from most recent CI job commit to live."
     PRTitle: "Merge from recent CI job to live"
-    WorkingDirectory: ${{ parameters.WorkingDirectory }}
-    GHReviewersVariable: ${{ parameters.GHReviewersVariable }}
-    GHTeamReviewersVariable: ${{ parameters.GHTeamReviewersVariable }}
+    WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
     CloseAfterOpenForTesting: $false
