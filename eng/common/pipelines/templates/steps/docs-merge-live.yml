@@ -16,14 +16,29 @@ parameters:
 
 steps:
 - pwsh: |
+    git clone https://github.com/${{ parameters.TargetDocRepoOwner }}/${{ parameters.TargetDocRepoName }} ${{ parameters.WorkingDirectory }}/repo
+
+    try {
+      Push-Location ${{ parameters.WorkingDirectory }}
+
+      Write-Host "git checkout ${{ parameters.SourceBranchName }}"
+      git checkout ${{ parameters.SourceBranchName }}
+    } finally {
+      Pop-Location
+    }
+  displayName: Clone Documentation Repository
+  ignoreLASTEXITCODE: false
+- pwsh: |
     $ciLastCommit = git log --author="VSC-Service-Account" --pretty=format:'%H' -n 1
     echo "##vso[task.setvariable variable=CICommit]$ciLastCommit"
+  workingDirectoy: ${{ parameters.WorkingDirectory }}
   displayName: Fetch the last commit for Job CI commits.
   
 - pwsh: |
     git reset --hard $(CICommit)
     git checkout -b for-release
   displayName: 'Checkout new branch for-release'
+  workingDirectoy: ${{ parameters.WorkingDirectory }}
   ignoreLASTEXITCODE: false
 
 - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
@@ -34,8 +49,7 @@ steps:
     BaseBranchName: "for-release"
     CommitMsg: "Daily merge from most recent CI job commit to live."
     PRTitle: "Merge from recent CI job to live"
-    WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
-    ScriptDirectory: ${{ parameters.WorkingDirectory }}/${{ parameters.ScriptDirectory }}
+    WorkingDirectory: ${{ parameters.WorkingDirectory }}
     GHReviewersVariable: ${{ parameters.GHReviewersVariable }}
     GHTeamReviewersVariable: ${{ parameters.GHTeamReviewersVariable }}
     CloseAfterOpenForTesting: $false
