@@ -16,7 +16,7 @@ parameters:
 
 steps:
 - pwsh: |
-    git clone https://github.com/${{ parameters.TargetDocRepoOwner }}/${{ parameters.TargetDocRepoName }} ${{ parameters.WorkingDirectory }}/repo
+    git clone https://github.com/${{ parameters.TargetDocRepoOwner }}/${{ parameters.TargetDocRepoName }} ${{ parameters.WorkingDirectory }}
 
     try {
       Push-Location ${{ parameters.WorkingDirectory }}
@@ -45,12 +45,12 @@ steps:
   parameters:
     RepoName: ${{ parameters.TargetDocRepoName }}
     RepoOwner: ${{ parameters.TargetDocRepoOwner }}
-    PROwner: "origin"
+    PROwner: "Azure"
     PRBranchName: "live"
     BaseBranchName: "for-release"
     CommitMsg: "Daily merge from most recent CI job commit to live."
     PRTitle: "Merge from recent CI job to live"
-    WorkingDirectory: ${{ parameters.WorkingDirectory }}
+    WorkingDirectory: ${{ parameters.WorkingDirectory }}/repo
     GHReviewersVariable: ${{ parameters.GHReviewersVariable }}
     GHTeamReviewersVariable: ${{ parameters.GHTeamReviewersVariable }}
     CloseAfterOpenForTesting: $false
