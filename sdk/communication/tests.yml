@@ -43,6 +43,8 @@ stages:
           $c.Account.Tenants | ConvertTo-Json
           Write-Host ">>> type"
           $c.Account.Type | ConvertTo-Json
+
+          New-AzResourceGroup -name bebroder-test -Location eastus2
     PostSteps:
       - task: Maven@3
         displayName: 'Generate aggregate code coverage report'
