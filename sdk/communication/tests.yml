@@ -9,6 +9,9 @@ stages:
       Int:
         SubscriptionConfiguration: $(sub-config-communication-int-test-resources)
     Clouds: Public,Int
+    MatrixFilters:
+      - OSVmImage=MMSUbuntu18.04
+      - TestFromSource=^$
     Artifacts:
       - name: azure-communication-chat
         groupId: com.azure
