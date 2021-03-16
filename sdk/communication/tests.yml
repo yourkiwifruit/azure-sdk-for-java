@@ -23,6 +23,23 @@ stages:
         groupId: com.azure
         safeName: azurecommunicationphonenumbers
     ServiceDirectory: communication
+    PreSteps:
+      - pwsh:
+          $c = Get-AzContext
+          Write-Host ">>> env"
+          $c.Environment | ConvertTo-Json
+          Write-Host ">>> tenant"
+          $c.Tenant | ConvertTo-Json
+          Write-Host ">>> subscription"
+          $c.Subscription | ConvertTo-Json
+          Write-Host ">>> name"
+          $c.Name | ConvertTo-Json
+          Write-Host ">>> accountid"
+          $c.Account.Id | ConvertTo-Json
+          Write-Host ">>> tenants"
+          $c.Account.Tenants | ConvertTo-Json
+          Write-Host ">>> type"
+          $c.Account.Type | ConvertTo-Json
     PostSteps:
       - task: Maven@3
         displayName: 'Generate aggregate code coverage report'
