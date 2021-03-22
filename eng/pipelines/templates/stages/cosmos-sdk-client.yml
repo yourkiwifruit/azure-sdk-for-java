@@ -38,7 +38,7 @@ stages:
           - template: ../steps/install-reporting-tools.yml
         MatrixConfigs:
           - Name: Cosmos_ci_test
-            Path: eng/pipelines/templates/stages/platform-matrix.cosmos.json
+            Path: eng/pipelines/templates/stages/platform-matrix.json
             Selection: sparse
             NonSparseParameters: Agent
             GenerateVMJobs: true
@@ -48,6 +48,8 @@ stages:
           - TestOptions=.*/-Punit
           - AZURE_TEST.*=.*/
 
+  - stage: Test
+    jobs:
     - template: /eng/common/pipelines/templates/jobs/archetype-sdk-tests-generate.yml
       parameters:
         JobTemplatePath: /eng/pipelines/templates/jobs/live.tests.yml
