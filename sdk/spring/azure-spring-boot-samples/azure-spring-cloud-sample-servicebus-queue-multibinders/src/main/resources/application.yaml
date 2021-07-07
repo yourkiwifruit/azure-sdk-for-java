@@ -1,19 +1,14 @@
 spring:
-  cloud:
+    cloud:
     stream:
       function:
-        definition: consume1;supply1;consume2;supply2
+        definition: supply1;supply2
       bindings:
-        consume1-in-0:
-          destination: [servicebus-queue-1-name]
         supply1-out-0:
-          destination: [servicebus-queue-1-name-same-as-above]
-        consume2-in-0:
-          binder: servicebus-2
-          destination: [servicebus-queue-2-name]
+          destination: queue1
         supply2-out-0:
           binder: servicebus-2
-          destination: [servicebus-queue-2-name-same-as-above]
+          destination: queue2
 
       binders:
         servicebus-1:
@@ -24,7 +19,7 @@ spring:
               cloud:
                 azure:
                   servicebus:
-                    connection-string: [servicebus-namespace-1-connection-string]
+                    connection-string: Endpoint=sb://servicebus-xiaozhu-1.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=rlkgPRKENhqLAM7d5qMOtdDPLTF0OHLDS6SX7yeocLc=
         servicebus-2:
           type: servicebus-queue
           default-candidate: false
@@ -33,7 +28,7 @@ spring:
               cloud:
                 azure:
                   servicebus:
-                    connection-string: [servicebus-namespace-2-connection-string]
+                    connection-string: Endpoint=sb://servicebus-xiaozhu-1.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=rlkgPRKENhqLAM7d5qMOtdDPLTF0OHLDS6SX7yeocLc=
       servicebus:
         queue:
           bindings:
@@ -46,3 +41,7 @@ spring:
       poller:
         initial-delay: 0
         fixed-delay: 1000
+
+    profiles:
+        active: manual
+debug: true

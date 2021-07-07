@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
+import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -41,16 +42,16 @@ import java.util.concurrent.TimeoutException;
 public class DefaultMessageHandler extends AbstractMessageProducingHandler {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMessageHandler.class);
     private static final long DEFAULT_SEND_TIMEOUT = 10000;
-    private final String destination;
-    private final SendOperation sendOperation;
-    private boolean sync = false;
-    private ListenableFutureCallback<Void> sendCallback;
-    private EvaluationContext evaluationContext;
-    private Expression sendTimeoutExpression = new ValueExpression<>(DEFAULT_SEND_TIMEOUT);
-    private ErrorMessageStrategy errorMessageStrategy = new DefaultErrorMessageStrategy();
-    private Expression partitionKeyExpression;
-    private MessageChannel sendFailureChannel;
-    private String sendFailureChannelName;
+    protected final String destination;
+    protected final SendOperation sendOperation;
+    protected boolean sync = false;
+    protected ListenableFutureCallback<Void> sendCallback;
+    protected EvaluationContext evaluationContext;
+    protected Expression sendTimeoutExpression = new ValueExpression<>(DEFAULT_SEND_TIMEOUT);
+    protected ErrorMessageStrategy errorMessageStrategy = new DefaultErrorMessageStrategy();
+    protected Expression partitionKeyExpression;
+    protected MessageChannel sendFailureChannel;
+    protected String sendFailureChannelName;
 
     public DefaultMessageHandler(String destination, @NonNull SendOperation sendOperation) {
         Assert.hasText(destination, "destination can't be null or empty");

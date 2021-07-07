@@ -8,8 +8,8 @@ import com.azure.spring.integration.core.api.CheckpointConfig;
 import com.azure.spring.integration.core.api.CheckpointMode;
 import com.azure.spring.integration.core.api.PartitionSupplier;
 import com.azure.spring.integration.core.api.SendOperation;
+import com.azure.spring.integration.servicebus.api.ServiceBusClientFactory;
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageConverter;
-import com.azure.spring.integration.servicebus.factory.ServiceBusSenderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -28,7 +28,7 @@ import static com.azure.spring.integration.core.api.CheckpointMode.RECORD;
  * @author Warren Zhu
  * @author Eduardo Sciullo
  */
-public class ServiceBusTemplate<T extends ServiceBusSenderFactory> implements SendOperation {
+public class ServiceBusTemplate<T extends ServiceBusClientFactory> implements SendOperation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceBusTemplate.class);
     private static final CheckpointConfig CHECKPOINT_RECORD = CheckpointConfig.builder().checkpointMode(RECORD).build();
@@ -38,12 +38,12 @@ public class ServiceBusTemplate<T extends ServiceBusSenderFactory> implements Se
     protected ServiceBusClientConfig clientConfig = ServiceBusClientConfig.builder().build();
     protected ServiceBusMessageConverter messageConverter;
 
-    public ServiceBusTemplate(@NonNull T senderFactory) {
-        this(senderFactory, DEFAULT_CONVERTER);
+    public ServiceBusTemplate(@NonNull T clientFactory) {
+        this(clientFactory, DEFAULT_CONVERTER);
     }
 
-    public ServiceBusTemplate(@NonNull T senderFactory, @NonNull ServiceBusMessageConverter messageConverter) {
-        this.clientFactory = senderFactory;
+    public ServiceBusTemplate(@NonNull T clientFactory, @NonNull ServiceBusMessageConverter messageConverter) {
+        this.clientFactory = clientFactory;
         this.messageConverter = messageConverter;
         LOGGER.info("Started ServiceBusTemplate with properties: {}", checkpointConfig);
     }
@@ -59,7 +59,8 @@ public class ServiceBusTemplate<T extends ServiceBusSenderFactory> implements Se
         if (StringUtils.hasText(partitionKey)) {
             serviceBusMessage.setPartitionKey(partitionKey);
         }
-        return this.clientFactory.getOrCreateSender(destination).sendMessage(serviceBusMessage).toFuture();
+
+        return this.clientFactory.getOrCreateSenderAsyncClient(destination).sendMessage(serviceBusMessage).toFuture();
     }
 
     public CheckpointConfig getCheckpointConfig() {

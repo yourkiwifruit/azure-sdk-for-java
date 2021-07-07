@@ -1,16 +1,14 @@
 spring:
-  cloud:
+    cloud:
     azure:
       servicebus:
-        connection-string: [servicebus-namespace-connection-string]
+        connection-string: Endpoint=sb://servicebus-xiaozhu-1.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=rlkgPRKENhqLAM7d5qMOtdDPLTF0OHLDS6SX7yeocLc=
     stream:
       function:
-        definition: consume;supply
+        definition: supply
       bindings:
-        consume-in-0:
-          destination: [servicebus-queue-name]
         supply-out-0:
-          destination: [servicebus-queue-name-same-as-above]
+          destination: queue1
       servicebus:
         queue:
           bindings:
@@ -20,3 +18,6 @@ spring:
       poller:
         fixed-delay: 1000
         initial-delay: 0
+debug: true
+server:
+    port: 8081

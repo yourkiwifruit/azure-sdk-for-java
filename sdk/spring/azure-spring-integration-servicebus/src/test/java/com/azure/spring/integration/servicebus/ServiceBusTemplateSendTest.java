@@ -6,7 +6,7 @@ package com.azure.spring.integration.servicebus;
 import com.azure.messaging.servicebus.ServiceBusMessage;
 import com.azure.messaging.servicebus.ServiceBusSenderAsyncClient;
 import com.azure.spring.integration.core.api.SendOperation;
-import com.azure.spring.integration.servicebus.factory.ServiceBusSenderFactory;
+import com.azure.spring.integration.servicebus.api.ServiceBusClientFactory;
 import com.azure.spring.integration.test.support.SendOperationTest;
 import org.junit.jupiter.api.BeforeEach;
 import reactor.core.publisher.Mono;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
  * @param <T>
  * @param <C>
  */
-public abstract class ServiceBusTemplateSendTest<T extends ServiceBusSenderFactory,
+public abstract class ServiceBusTemplateSendTest<T extends ServiceBusClientFactory,
                                                     C extends ServiceBusSenderAsyncClient>
     extends SendOperationTest<SendOperation> {
 

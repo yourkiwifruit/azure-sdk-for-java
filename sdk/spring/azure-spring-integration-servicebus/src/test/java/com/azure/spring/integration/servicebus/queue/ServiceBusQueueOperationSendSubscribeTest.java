@@ -4,7 +4,6 @@
 package com.azure.spring.integration.servicebus.queue;
 
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
-import com.azure.spring.integration.servicebus.factory.ServiceBusQueueClientFactory;
 import com.azure.spring.integration.servicebus.support.ServiceBusQueueTestOperation;
 import com.azure.spring.integration.test.support.SendSubscribeWithoutGroupOperationTest;
 import org.junit.jupiter.api.AfterEach;

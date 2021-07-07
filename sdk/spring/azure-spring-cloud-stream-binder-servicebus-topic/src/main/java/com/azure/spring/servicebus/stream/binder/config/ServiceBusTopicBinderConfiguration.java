@@ -11,6 +11,7 @@ import com.azure.spring.cloud.autoconfigure.servicebus.AzureServiceBusTopicAutoC
 import com.azure.spring.cloud.context.core.impl.ServiceBusNamespaceManager;
 import com.azure.spring.cloud.context.core.impl.ServiceBusTopicManager;
 import com.azure.spring.cloud.context.core.impl.ServiceBusTopicSubscriptionManager;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.azure.spring.integration.servicebus.topic.ServiceBusTopicOperation;
 import com.azure.spring.servicebus.stream.binder.ServiceBusTopicMessageChannelBinder;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusTopicExtendedBindingProperties;
@@ -47,12 +48,12 @@ public class ServiceBusTopicBinderConfiguration {
         @Autowired(required = false) ServiceBusTopicSubscriptionManager serviceBusTopicSubscriptionManager) {
 
         if (serviceBusNamespaceManager != null
-                && serviceBusTopicManager != null
-                && serviceBusTopicSubscriptionManager != null) {
+            && serviceBusTopicManager != null
+            && serviceBusTopicSubscriptionManager != null) {
             return new ServiceBusTopicChannelResourceManagerProvisioner(serviceBusNamespaceManager,
-                                                                        serviceBusTopicManager,
-                                                                        serviceBusTopicSubscriptionManager,
-                                                                        serviceBusProperties.getNamespace());
+                serviceBusTopicManager,
+                serviceBusTopicSubscriptionManager,
+                serviceBusProperties.getNamespace());
         }
         return new ServiceBusChannelProvisioner();
     }
@@ -61,11 +62,11 @@ public class ServiceBusTopicBinderConfiguration {
     public ServiceBusTopicMessageChannelBinder serviceBusTopicBinder(
         ServiceBusChannelProvisioner topicChannelProvisioner,
         ServiceBusTopicOperation serviceBusTopicOperation,
-        ServiceBusTopicExtendedBindingProperties bindingProperties) {
+        ServiceBusTopicExtendedBindingProperties bindingProperties, InstrumentationManager instrumentationManager) {
 
         ServiceBusTopicMessageChannelBinder binder = new ServiceBusTopicMessageChannelBinder(null,
-                                                                                             topicChannelProvisioner,
-                                                                                             serviceBusTopicOperation);
+            topicChannelProvisioner,
+            serviceBusTopicOperation, instrumentationManager);
         binder.setBindingProperties(bindingProperties);
         return binder;
     }

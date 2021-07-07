@@ -4,11 +4,7 @@
 package com.azure.spring.integration.servicebus.factory;
 
 import com.azure.core.amqp.AmqpTransportType;
-import com.azure.messaging.servicebus.ServiceBusClientBuilder;
-import com.azure.messaging.servicebus.ServiceBusErrorContext;
-import com.azure.messaging.servicebus.ServiceBusProcessorClient;
-import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
-import com.azure.messaging.servicebus.ServiceBusSenderAsyncClient;
+import com.azure.messaging.servicebus.*;
 import com.azure.messaging.servicebus.models.ServiceBusReceiveMode;
 import com.azure.spring.cloud.context.core.util.Tuple;
 import com.azure.spring.integration.servicebus.ServiceBusClientConfig;
@@ -18,26 +14,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Default implementation of {@link ServiceBusTopicClientFactory}. Client will be cached to improve performance
+ * Default implementation of {@link AbstractServiceBusTopicClientFactory}. Client will be cached to improve performance
  *
  * @author Warren Zhu
  */
-public class DefaultServiceBusTopicClientFactory extends AbstractServiceBusSenderFactory
-    implements ServiceBusTopicClientFactory {
+public class DefaultServiceBusTopicClientFactory extends AbstractServiceBusTopicClientFactory<String> {
 
-
-    private final ServiceBusClientBuilder serviceBusClientBuilder;
     private final Map<Tuple<String, String>, ServiceBusProcessorClient> topicProcessorMap = new ConcurrentHashMap<>();
-    private final Map<String, ServiceBusSenderAsyncClient> topicSenderMap = new ConcurrentHashMap<>();
-
-    public DefaultServiceBusTopicClientFactory(String connectionString) {
-        this(connectionString, AmqpTransportType.AMQP);
-    }
 
     public DefaultServiceBusTopicClientFactory(String connectionString, AmqpTransportType amqpTransportType) {
-        super(connectionString);
-        this.serviceBusClientBuilder = new ServiceBusClientBuilder().connectionString(connectionString);
-        this.serviceBusClientBuilder.transportType(amqpTransportType);
+        super(connectionString,amqpTransportType);
     }
 
     @Override
@@ -47,23 +33,14 @@ public class DefaultServiceBusTopicClientFactory extends AbstractServiceBusSende
         ServiceBusClientConfig clientConfig,
         ServiceBusMessageProcessor<ServiceBusReceivedMessageContext, ServiceBusErrorContext> messageProcessor) {
         return this.topicProcessorMap.computeIfAbsent(Tuple.of(topic, subscription),
-                                                      t -> createProcessor(t.getFirst(),
-                                                                           t.getSecond(),
-                                                                           clientConfig,
-                                                                           messageProcessor));
+            t -> createProcessor(t.getFirst(), t.getSecond(), clientConfig, messageProcessor));
     }
-
-    @Override
-    public ServiceBusSenderAsyncClient getOrCreateSender(String name) {
-        return this.topicSenderMap.computeIfAbsent(name, this::createTopicSender);
-    }
-
 
     private ServiceBusProcessorClient createProcessor(String topic,
                                                       String subscription,
                                                       ServiceBusClientConfig config,
                                                       ServiceBusMessageProcessor<ServiceBusReceivedMessageContext,
-                                                                                    ServiceBusErrorContext> messageProcessor) {
+                                                          ServiceBusErrorContext> messageProcessor) {
         if (config.isSessionsEnabled()) {
             return serviceBusClientBuilder.sessionProcessor()
                                           .topicName(topic)
@@ -92,7 +69,4 @@ public class DefaultServiceBusTopicClientFactory extends AbstractServiceBusSende
         }
     }
 
-    private ServiceBusSenderAsyncClient createTopicSender(String name) {
-        return serviceBusClientBuilder.sender().topicName(name).buildAsyncClient();
-    }
 }

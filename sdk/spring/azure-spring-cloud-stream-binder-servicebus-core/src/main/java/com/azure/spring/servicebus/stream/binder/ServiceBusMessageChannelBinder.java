@@ -3,6 +3,8 @@
 
 package com.azure.spring.servicebus.stream.binder;
 
+import com.azure.spring.integration.servicebus.handler.DefaultServiceBusMessageHandler;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusConsumerProperties;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusExtendedBindingProperties;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusProducerProperties;
@@ -31,9 +33,9 @@ import org.springframework.messaging.MessageHandler;
  */
 public abstract class ServiceBusMessageChannelBinder<T extends ServiceBusExtendedBindingProperties> extends
     AbstractMessageChannelBinder<ExtendedConsumerProperties<ServiceBusConsumerProperties>,
-            ExtendedProducerProperties<ServiceBusProducerProperties>,
+        ExtendedProducerProperties<ServiceBusProducerProperties>,
         ServiceBusChannelProvisioner>
-        implements
+    implements
     ExtendedPropertiesBinder<MessageChannel, ServiceBusConsumerProperties, ServiceBusProducerProperties> {
 
     protected T bindingProperties;
@@ -42,8 +44,12 @@ public abstract class ServiceBusMessageChannelBinder<T extends ServiceBusExtende
 
     protected static final String EXCEPTION_MESSAGE = "exception-message";
 
-    public ServiceBusMessageChannelBinder(String[] headersToEmbed, ServiceBusChannelProvisioner provisioningProvider) {
+    protected InstrumentationManager instrumentationManager;
+
+    public ServiceBusMessageChannelBinder(String[] headersToEmbed, ServiceBusChannelProvisioner provisioningProvider,
+                                          InstrumentationManager instrumentationManager) {
         super(headersToEmbed, provisioningProvider);
+        this.instrumentationManager = instrumentationManager;
     }
 
     @Override
@@ -52,14 +58,15 @@ public abstract class ServiceBusMessageChannelBinder<T extends ServiceBusExtende
         ExtendedProducerProperties<ServiceBusProducerProperties> producerProperties,
         MessageChannel errorChannel) {
 
-        DefaultMessageHandler handler = new DefaultMessageHandler(destination.getName(), getSendOperation());
+        DefaultMessageHandler handler = new DefaultServiceBusMessageHandler(destination.getName(), getSendOperation(),instrumentationManager);
+
         handler.setBeanFactory(getBeanFactory());
         handler.setSync(producerProperties.getExtension().isSync());
         handler.setSendTimeout(producerProperties.getExtension().getSendTimeout());
         handler.setSendFailureChannel(errorChannel);
         if (producerProperties.isPartitioned()) {
             handler.setPartitionKeyExpressionString(
-                    "'partitionKey-' + headers['" + BinderHeaders.PARTITION_HEADER + "']");
+                "'partitionKey-' + headers['" + BinderHeaders.PARTITION_HEADER + "']");
         } else {
             handler.setPartitionKeyExpression(new FunctionExpression<Message<?>>(m -> m.getPayload().hashCode()));
         }
@@ -97,7 +104,7 @@ public abstract class ServiceBusMessageChannelBinder<T extends ServiceBusExtende
     }
 
     protected CheckpointConfig buildCheckpointConfig(
-            ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
+        ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
 
         return CheckpointConfig.builder()
                                .checkpointMode(properties.getExtension().getCheckpointMode())
@@ -105,7 +112,7 @@ public abstract class ServiceBusMessageChannelBinder<T extends ServiceBusExtende
     }
 
     protected ServiceBusClientConfig buildClientConfig(
-            ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
+        ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
 
         ServiceBusConsumerProperties consumerProperties = properties.getExtension();
         return ServiceBusClientConfig.builder()

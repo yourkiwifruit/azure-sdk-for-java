@@ -7,7 +7,6 @@ import com.azure.messaging.servicebus.ServiceBusMessage;
 import com.azure.messaging.servicebus.ServiceBusSenderAsyncClient;
 import com.azure.spring.integration.servicebus.ServiceBusTemplateSendTest;
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageConverter;
-import com.azure.spring.integration.servicebus.factory.ServiceBusQueueClientFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.MockitoAnnotations;

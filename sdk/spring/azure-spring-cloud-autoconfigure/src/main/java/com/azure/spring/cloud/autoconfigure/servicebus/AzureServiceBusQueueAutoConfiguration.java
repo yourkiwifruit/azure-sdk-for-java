@@ -8,9 +8,10 @@ import com.azure.spring.cloud.context.core.config.AzureProperties;
 import com.azure.spring.cloud.context.core.impl.ServiceBusNamespaceManager;
 import com.azure.spring.cloud.context.core.impl.ServiceBusQueueManager;
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageConverter;
+import com.azure.spring.integration.servicebus.factory.AbstractServiceBusQueueClientFactory;
 import com.azure.spring.integration.servicebus.factory.DefaultServiceBusQueueClientFactory;
 import com.azure.spring.integration.servicebus.factory.ServiceBusConnectionStringProvider;
-import com.azure.spring.integration.servicebus.factory.ServiceBusQueueClientFactory;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.azure.spring.integration.servicebus.queue.ServiceBusQueueOperation;
 import com.azure.spring.integration.servicebus.queue.ServiceBusQueueTemplate;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ import org.springframework.util.Assert;
  */
 @Configuration
 @AutoConfigureAfter(AzureServiceBusAutoConfiguration.class)
-@ConditionalOnClass(value = { ServiceBusProcessorClient.class, ServiceBusQueueClientFactory.class })
+@ConditionalOnClass(value = { ServiceBusProcessorClient.class, AbstractServiceBusQueueClientFactory.class })
 @ConditionalOnProperty(value = "spring.cloud.azure.servicebus.enabled", matchIfMissing = true)
 public class AzureServiceBusQueueAutoConfiguration {
 
@@ -47,7 +48,7 @@ public class AzureServiceBusQueueAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ServiceBusQueueClientFactory queueClientFactory(
+    public AbstractServiceBusQueueClientFactory queueClientFactory(
         ServiceBusConnectionStringProvider connectionStringProvider,
         @Autowired(required = false) ServiceBusNamespaceManager namespaceManager,
         @Autowired(required = false) ServiceBusQueueManager queueManager,
@@ -62,7 +63,8 @@ public class AzureServiceBusQueueAutoConfiguration {
 
         Assert.notNull(connectionString, "Service Bus connection string must not be null");
 
-        DefaultServiceBusQueueClientFactory clientFactory = new DefaultServiceBusQueueClientFactory(connectionString, properties.getTransportType());
+        DefaultServiceBusQueueClientFactory clientFactory = new DefaultServiceBusQueueClientFactory(connectionString,
+            properties.getTransportType());
         clientFactory.setNamespace(properties.getNamespace());
         clientFactory.setServiceBusNamespaceManager(namespaceManager);
         clientFactory.setServiceBusQueueManager(queueManager);
@@ -78,10 +80,17 @@ public class AzureServiceBusQueueAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnBean(ServiceBusQueueClientFactory.class)
-    public ServiceBusQueueOperation queueOperation(ServiceBusQueueClientFactory factory,
-                                                   ServiceBusMessageConverter messageConverter) {
-        return new ServiceBusQueueTemplate(factory, messageConverter);
+    public InstrumentationManager instrumentationManager() {
+        return new InstrumentationManager();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(AbstractServiceBusQueueClientFactory.class)
+    public ServiceBusQueueOperation queueOperation(AbstractServiceBusQueueClientFactory factory,
+                                                   ServiceBusMessageConverter messageConverter,
+                                                   InstrumentationManager instrumentationManager) {
+        return new ServiceBusQueueTemplate(factory, messageConverter,instrumentationManager);
     }
 
 

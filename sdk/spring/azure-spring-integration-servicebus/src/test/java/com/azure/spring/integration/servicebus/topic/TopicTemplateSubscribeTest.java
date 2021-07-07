@@ -4,7 +4,6 @@
 package com.azure.spring.integration.servicebus.topic;
 
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageConverter;
-import com.azure.spring.integration.servicebus.factory.ServiceBusTopicClientFactory;
 import com.azure.spring.integration.servicebus.support.ServiceBusProcessorClientWrapper;
 import com.azure.spring.integration.test.support.SubscribeByGroupOperationTest;
 import org.junit.jupiter.api.AfterEach;

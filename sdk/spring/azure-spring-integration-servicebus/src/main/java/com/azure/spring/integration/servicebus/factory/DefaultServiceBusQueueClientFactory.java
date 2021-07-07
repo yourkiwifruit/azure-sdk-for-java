@@ -5,12 +5,11 @@ package com.azure.spring.integration.servicebus.factory;
 
 
 import com.azure.core.amqp.AmqpTransportType;
-import com.azure.messaging.servicebus.ServiceBusClientBuilder;
 import com.azure.messaging.servicebus.ServiceBusErrorContext;
 import com.azure.messaging.servicebus.ServiceBusProcessorClient;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
-import com.azure.messaging.servicebus.ServiceBusSenderAsyncClient;
 import com.azure.messaging.servicebus.models.ServiceBusReceiveMode;
+import com.azure.messaging.servicebus.models.SubQueue;
 import com.azure.spring.integration.servicebus.ServiceBusClientConfig;
 import com.azure.spring.integration.servicebus.ServiceBusMessageProcessor;
 
@@ -18,27 +17,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Default implementation of {@link ServiceBusQueueClientFactory}. Client will be cached to improve performance
+ * Default implementation of {@link AbstractServiceBusQueueClientFactory}. Client will be cached to improve performance
  *
  * @author Warren Zhu
  */
-public class DefaultServiceBusQueueClientFactory extends AbstractServiceBusSenderFactory
-    implements ServiceBusQueueClientFactory {
+public class DefaultServiceBusQueueClientFactory extends AbstractServiceBusQueueClientFactory<SubQueue> {
 
     private final Map<String, ServiceBusProcessorClient> processorClientMap = new ConcurrentHashMap<>();
-    private final Map<String, ServiceBusSenderAsyncClient> senderClientMap = new ConcurrentHashMap<>();
-
-    // TODO (xiada) whether will this reuse the underlying connection?
-    private final ServiceBusClientBuilder serviceBusClientBuilder;
-
-    public DefaultServiceBusQueueClientFactory(String connectionString) {
-        this(connectionString, AmqpTransportType.AMQP);
-    }
 
     public DefaultServiceBusQueueClientFactory(String connectionString, AmqpTransportType amqpTransportType) {
-        super(connectionString);
-        this.serviceBusClientBuilder = new ServiceBusClientBuilder().connectionString(connectionString);
-        this.serviceBusClientBuilder.transportType(amqpTransportType);
+        super(connectionString, amqpTransportType);
     }
 
     @Override
@@ -47,12 +35,7 @@ public class DefaultServiceBusQueueClientFactory extends AbstractServiceBusSende
         ServiceBusClientConfig clientConfig,
         ServiceBusMessageProcessor<ServiceBusReceivedMessageContext, ServiceBusErrorContext> messageProcessor) {
         return this.processorClientMap.computeIfAbsent(name,
-                                                       n -> createProcessorClient(n, clientConfig, messageProcessor));
-    }
-
-    @Override
-    public ServiceBusSenderAsyncClient getOrCreateSender(String name) {
-        return this.senderClientMap.computeIfAbsent(name, this::createQueueSender);
+            n -> createProcessorClient(n, clientConfig, messageProcessor));
     }
 
     private ServiceBusProcessorClient createProcessorClient(
@@ -85,9 +68,5 @@ public class DefaultServiceBusQueueClientFactory extends AbstractServiceBusSende
                                           .buildProcessorClient();
         }
 
-    }
-
-    private ServiceBusSenderAsyncClient createQueueSender(String name) {
-        return serviceBusClientBuilder.sender().queueName(name).buildAsyncClient();
     }
 }

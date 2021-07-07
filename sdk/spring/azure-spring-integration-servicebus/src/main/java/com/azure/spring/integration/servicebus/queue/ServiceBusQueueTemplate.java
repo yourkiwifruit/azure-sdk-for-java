@@ -11,12 +11,16 @@ import com.azure.spring.integration.servicebus.ServiceBusRuntimeException;
 import com.azure.spring.integration.servicebus.ServiceBusTemplate;
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageConverter;
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageHeaders;
-import com.azure.spring.integration.servicebus.factory.ServiceBusQueueClientFactory;
+import com.azure.spring.integration.servicebus.factory.AbstractServiceBusQueueClientFactory;
+import com.azure.spring.integration.servicebus.factory.AbstractServiceBusTopicClientFactory;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.integration.support.MessageBuilder;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessagingException;
 import org.springframework.util.Assert;
 
 import java.util.Set;
@@ -25,7 +29,7 @@ import java.util.function.Consumer;
 /**
  * Default implementation of {@link ServiceBusQueueOperation}.
  */
-public class ServiceBusQueueTemplate extends ServiceBusTemplate<ServiceBusQueueClientFactory>
+public class ServiceBusQueueTemplate extends ServiceBusTemplate<AbstractServiceBusQueueClientFactory>
     implements ServiceBusQueueOperation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceBusQueueTemplate.class);
@@ -36,13 +40,17 @@ public class ServiceBusQueueTemplate extends ServiceBusTemplate<ServiceBusQueueC
 
     private final Set<String> subscribedQueues = Sets.newConcurrentHashSet();
 
-    public ServiceBusQueueTemplate(ServiceBusQueueClientFactory clientFactory) {
+    private InstrumentationManager instrumentationManager;
+
+    public ServiceBusQueueTemplate(AbstractServiceBusQueueClientFactory clientFactory) {
         super(clientFactory);
     }
 
-    public ServiceBusQueueTemplate(ServiceBusQueueClientFactory clientFactory,
-                                   ServiceBusMessageConverter messageConverter) {
+    public ServiceBusQueueTemplate(AbstractServiceBusQueueClientFactory clientFactory,
+                                   ServiceBusMessageConverter messageConverter,
+                                   InstrumentationManager instrumentationManager) {
         super(clientFactory, messageConverter);
+        this.instrumentationManager = instrumentationManager;
     }
 
     /**
@@ -70,8 +78,18 @@ public class ServiceBusQueueTemplate extends ServiceBusTemplate<ServiceBusQueueC
         };
 
         ServiceBusProcessorClient processorClient = this.clientFactory.getOrCreateProcessor(name, clientConfig,
-                                                                                            messageProcessor);
-        processorClient.start();
+            messageProcessor);
+        try {
+            processorClient.start();
+            instrumentationManager.getHealthInstrumentation(name).markStartedSuccessfully();
+        } catch (Exception e) {
+            instrumentationManager.getHealthInstrumentation(name).markStartFailed(e);
+            LOGGER.error("ProcessorClient startup failed, Caused by" + e.getMessage());
+            throw new MessagingException(MessageBuilder.withPayload(
+                "ProcessorClient startup failed, Caused by " + e.getMessage())
+                                                       .build(), e);
+        }
+
     }
 
     @Override

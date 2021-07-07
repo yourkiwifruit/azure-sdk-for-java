@@ -3,7 +3,6 @@
 
 package com.azure.spring.integration.servicebus.queue;
 
-import com.azure.spring.integration.servicebus.factory.ServiceBusQueueClientFactory;
 import com.azure.spring.integration.servicebus.inbound.ServiceBusQueueInboundChannelAdapter;
 import com.azure.spring.integration.servicebus.support.ServiceBusQueueTestOperation;
 import com.azure.spring.integration.test.support.InboundChannelAdapterTest;

@@ -18,10 +18,11 @@ import java.util.Map;
  */
 public abstract class AbstractInboundChannelAdapter extends MessageProducerSupport {
 
-    private final String destination;
+    protected final String destination;
     protected String consumerGroup = null;
     protected SubscribeByGroupOperation subscribeByGroupOperation = null;
     protected SubscribeOperation subscribeOperation = null;
+
 
     protected AbstractInboundChannelAdapter(String destination) {
         Assert.hasText(destination, "destination can't be null or empty");

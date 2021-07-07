@@ -5,6 +5,7 @@ package com.azure.spring.servicebus.stream.binder;
 
 import com.azure.spring.integration.core.api.SendOperation;
 import com.azure.spring.integration.servicebus.inbound.ServiceBusQueueInboundChannelAdapter;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.azure.spring.integration.servicebus.queue.ServiceBusQueueOperation;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusConsumerProperties;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusQueueExtendedBindingProperties;
@@ -26,25 +27,32 @@ public class ServiceBusQueueMessageChannelBinder extends
 
     private final ServiceBusQueueOperation serviceBusQueueOperation;
 
+
+
     public ServiceBusQueueMessageChannelBinder(String[] headersToEmbed,
                                                @NonNull ServiceBusChannelProvisioner provisioningProvider,
-                                               @NonNull ServiceBusQueueOperation serviceBusQueueOperation) {
-        super(headersToEmbed, provisioningProvider);
+                                               @NonNull ServiceBusQueueOperation serviceBusQueueOperation,
+                                               InstrumentationManager instrumentationManager) {
+        super(headersToEmbed, provisioningProvider,instrumentationManager);
         this.serviceBusQueueOperation = serviceBusQueueOperation;
         this.bindingProperties = new ServiceBusQueueExtendedBindingProperties();
     }
 
     @Override
     protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group,
-        ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
+                                                     ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
 
         // TODO (xiada) the instance of service bus operation is shared among consumer endpoints, if each of them
         //  doesn't share the same configuration the last will win。 Is it possible that's this is a bug here？
         this.serviceBusQueueOperation.setCheckpointConfig(buildCheckpointConfig(properties));
         this.serviceBusQueueOperation.setClientConfig(buildClientConfig(properties));
+
         ServiceBusQueueInboundChannelAdapter inboundAdapter =
-                new ServiceBusQueueInboundChannelAdapter(destination.getName(), this.serviceBusQueueOperation);
+            new ServiceBusQueueInboundChannelAdapter(destination.getName(), this.serviceBusQueueOperation,
+                instrumentationManager);
+
         inboundAdapter.setBeanFactory(getBeanFactory());
+
         ErrorInfrastructure errorInfrastructure = registerErrorInfrastructure(destination, group, properties);
         inboundAdapter.setErrorChannel(errorInfrastructure.getErrorChannel());
         return inboundAdapter;
@@ -57,10 +65,11 @@ public class ServiceBusQueueMessageChannelBinder extends
 
     @Override
     protected MessageHandler getErrorMessageHandler(ConsumerDestination destination,
-        String group, final ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
+                                                    String group,
+                                                    final ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
         return message -> {
             Assert.state(message instanceof ErrorMessage, "Expected an ErrorMessage, not a "
-                    + message.getClass().toString() + " for: " + message);
+                + message.getClass().toString() + " for: " + message);
 
             ErrorMessage errorMessage = (ErrorMessage) message;
             Message<?> amqpMessage = errorMessage.getOriginalMessage();
@@ -72,7 +81,7 @@ public class ServiceBusQueueMessageChannelBinder extends
 
                 if (properties.getExtension().isRequeueRejected()) {
                     serviceBusQueueOperation.deadLetter(destination.getName(), amqpMessage, EXCEPTION_MESSAGE,
-                            cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
+                        cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
                 } else {
                     serviceBusQueueOperation.abandon(destination.getName(), amqpMessage);
                 }

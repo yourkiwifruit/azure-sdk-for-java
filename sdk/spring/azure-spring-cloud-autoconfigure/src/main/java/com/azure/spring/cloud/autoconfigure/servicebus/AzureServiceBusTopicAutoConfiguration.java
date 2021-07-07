@@ -9,9 +9,11 @@ import com.azure.spring.cloud.context.core.impl.ServiceBusNamespaceManager;
 import com.azure.spring.cloud.context.core.impl.ServiceBusTopicManager;
 import com.azure.spring.cloud.context.core.impl.ServiceBusTopicSubscriptionManager;
 import com.azure.spring.integration.servicebus.converter.ServiceBusMessageConverter;
+import com.azure.spring.integration.servicebus.factory.AbstractServiceBusQueueClientFactory;
+import com.azure.spring.integration.servicebus.factory.AbstractServiceBusTopicClientFactory;
 import com.azure.spring.integration.servicebus.factory.DefaultServiceBusTopicClientFactory;
 import com.azure.spring.integration.servicebus.factory.ServiceBusConnectionStringProvider;
-import com.azure.spring.integration.servicebus.factory.ServiceBusTopicClientFactory;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.azure.spring.integration.servicebus.topic.ServiceBusTopicOperation;
 import com.azure.spring.integration.servicebus.topic.ServiceBusTopicTemplate;
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ import org.springframework.util.Assert;
  */
 @Configuration
 @AutoConfigureAfter(AzureServiceBusAutoConfiguration.class)
-@ConditionalOnClass(value = {ServiceBusProcessorClient.class, ServiceBusTopicClientFactory.class})
+@ConditionalOnClass(value = { ServiceBusProcessorClient.class, AbstractServiceBusQueueClientFactory.class })
 @ConditionalOnProperty(value = "spring.cloud.azure.servicebus.enabled", matchIfMissing = true)
 public class AzureServiceBusTopicAutoConfiguration {
 
@@ -55,7 +57,7 @@ public class AzureServiceBusTopicAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ServiceBusTopicClientFactory topicClientFactory(
+    public AbstractServiceBusTopicClientFactory topicClientFactory(
         @Autowired(required = false) ServiceBusNamespaceManager namespaceManager,
         @Autowired(required = false) ServiceBusTopicManager topicManager,
         @Autowired(required = false) ServiceBusTopicSubscriptionManager topicSubscriptionManager,
@@ -71,7 +73,8 @@ public class AzureServiceBusTopicAutoConfiguration {
 
         Assert.notNull(connectionString, "Service Bus connection string must not be null");
 
-        DefaultServiceBusTopicClientFactory clientFactory = new DefaultServiceBusTopicClientFactory(connectionString, properties.getTransportType());
+        DefaultServiceBusTopicClientFactory clientFactory = new DefaultServiceBusTopicClientFactory(connectionString,
+            properties.getTransportType());
         clientFactory.setNamespace(properties.getNamespace());
         clientFactory.setServiceBusNamespaceManager(namespaceManager);
         clientFactory.setServiceBusTopicManager(topicManager);
@@ -88,10 +91,18 @@ public class AzureServiceBusTopicAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnBean(ServiceBusTopicClientFactory.class)
-    public ServiceBusTopicOperation topicOperation(ServiceBusTopicClientFactory factory,
-                                                   ServiceBusMessageConverter messageConverter) {
-        return new ServiceBusTopicTemplate(factory, messageConverter);
+    public InstrumentationManager instrumentationManager() {
+        return new InstrumentationManager();
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(AbstractServiceBusTopicClientFactory.class)
+    public ServiceBusTopicOperation topicOperation(AbstractServiceBusTopicClientFactory factory,
+                                                   ServiceBusMessageConverter messageConverter,
+                                                   InstrumentationManager instrumentationManager) {
+        return new ServiceBusTopicTemplate(factory, messageConverter, instrumentationManager);
     }
 
 }

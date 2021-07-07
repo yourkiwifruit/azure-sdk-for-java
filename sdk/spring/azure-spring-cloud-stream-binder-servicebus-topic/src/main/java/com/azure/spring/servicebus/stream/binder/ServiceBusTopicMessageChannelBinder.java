@@ -3,6 +3,7 @@
 
 package com.azure.spring.servicebus.stream.binder;
 
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusConsumerProperties;
 import com.azure.spring.servicebus.stream.binder.properties.ServiceBusTopicExtendedBindingProperties;
 import com.azure.spring.servicebus.stream.binder.provisioning.ServiceBusChannelProvisioner;
@@ -21,21 +22,22 @@ import java.util.UUID;
  * @author Warren Zhu
  */
 public class ServiceBusTopicMessageChannelBinder extends
-        ServiceBusMessageChannelBinder<ServiceBusTopicExtendedBindingProperties> {
+    ServiceBusMessageChannelBinder<ServiceBusTopicExtendedBindingProperties> {
 
     private final ServiceBusTopicOperation serviceBusTopicOperation;
 
     public ServiceBusTopicMessageChannelBinder(String[] headersToEmbed,
-            @NonNull ServiceBusChannelProvisioner provisioningProvider,
-            @NonNull ServiceBusTopicOperation serviceBusTopicOperation) {
-        super(headersToEmbed, provisioningProvider);
+                                               @NonNull ServiceBusChannelProvisioner provisioningProvider,
+                                               @NonNull ServiceBusTopicOperation serviceBusTopicOperation,
+                                               InstrumentationManager instrumentationManager) {
+        super(headersToEmbed, provisioningProvider, instrumentationManager);
         this.serviceBusTopicOperation = serviceBusTopicOperation;
         this.bindingProperties = new ServiceBusTopicExtendedBindingProperties();
     }
 
     @Override
     protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group,
-            ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
+                                                     ExtendedConsumerProperties<ServiceBusConsumerProperties> properties) {
 
         this.serviceBusTopicOperation.setCheckpointConfig(buildCheckpointConfig(properties));
         this.serviceBusTopicOperation.setClientConfig(buildClientConfig(properties));
@@ -44,7 +46,8 @@ public class ServiceBusTopicMessageChannelBinder extends
             group = "anonymous." + UUID.randomUUID().toString();
         }
         ServiceBusTopicInboundChannelAdapter inboundAdapter =
-                new ServiceBusTopicInboundChannelAdapter(destination.getName(), this.serviceBusTopicOperation, group);
+            new ServiceBusTopicInboundChannelAdapter(destination.getName(), this.serviceBusTopicOperation, group,
+                instrumentationManager);
         inboundAdapter.setBeanFactory(getBeanFactory());
         ErrorInfrastructure errorInfrastructure = registerErrorInfrastructure(destination, group, properties);
         inboundAdapter.setErrorChannel(errorInfrastructure.getErrorChannel());

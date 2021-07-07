@@ -5,6 +5,8 @@ package com.azure.spring.integration.servicebus.inbound;
 
 import com.azure.spring.integration.core.AbstractInboundChannelAdapter;
 import com.azure.spring.integration.core.api.SubscribeOperation;
+import com.azure.spring.integration.servicebus.metrics.Instrumentation;
+import com.azure.spring.integration.servicebus.metrics.InstrumentationManager;
 import org.springframework.lang.NonNull;
 
 /**
@@ -12,8 +14,19 @@ import org.springframework.lang.NonNull;
  */
 public class ServiceBusQueueInboundChannelAdapter extends AbstractInboundChannelAdapter {
 
-    public ServiceBusQueueInboundChannelAdapter(String destination, @NonNull SubscribeOperation subscribeOperation) {
+    private InstrumentationManager instrumentationManager;
+
+    public ServiceBusQueueInboundChannelAdapter(String destination, @NonNull SubscribeOperation subscribeOperation,
+                                                InstrumentationManager instrumentationManager) {
         super(destination);
         this.subscribeOperation = subscribeOperation;
+        this.instrumentationManager = instrumentationManager;
+    }
+
+    @Override
+    public void doStart() {
+        super.doStart();
+        instrumentationManager
+            .addHealthInstrumentation(new Instrumentation(this.destination + this.consumerGroup));
     }
 }
